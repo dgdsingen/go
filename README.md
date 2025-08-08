@@ -2,7 +2,7 @@
 
 r2n은 command의 stdio를 읽어 `\r` 를 `\n` 로 변환해준다.
 
-## why?
+## Why?
 
 [task](https://github.com/go-task/task) 에서 `output: interleaved` (default) 설정 + task 병렬 처리시 로그가 뒤섞인다. \
 이때 `output: prefixed` 설정해주면 stdout/stderr를 버퍼링해서 라인 단위로 로그 앞에 `[task]` prefix를 붙여줘서 로그 구분이 용이해진다.
@@ -16,13 +16,19 @@ progress를 실시간으로 보고 싶어서 `output: interleaved` or `interacti
 r2n은 stdio를 읽어 `\r` 를 `\n` 로 변환해줌으로서 \
 `output: prefixed` 에서 라인 단위로 로그를 구분하면서 실시간으로 progress 출력도 가능하게 해준다.
 
-## install
+## Install
+
+### Get the binary
+
+> https://github.com/dgdsingen/go/releases
+
+### Build from source
 
 ```sh
 GOPROXY=direct go install github.com/dgdsingen/go/cmd/r2n@latest
 ```
 
-## usage
+## Usage
 
 ```sh
 r2n curl https://test.com/1.txt
