@@ -1,6 +1,6 @@
 # r2n
 
-r2n은 command의 stdio를 읽어 `\r` 를 `\n` 로 변환해준다. \
+r2n은 command의 stdio를 읽어 `\r` 를 `\n` 로 변환해준다.
 
 ## why?
 
