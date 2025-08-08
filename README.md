@@ -25,5 +25,5 @@ GOPROXY=direct go install github.com/dgdsingen/go/cmd/r2n@latest
 ## usage
 
 ```sh
-r2n curl -L "https://test.com/test.tar.gz" | tar --totals -xzf -
+r2n curl "https://test.com/test.tar.gz" | tar -xzf -
 ```
