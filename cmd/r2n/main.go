@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	stdio := flag.String("stdio", "stderr", "Select stdio to replace [stdout, stderr]")
+	stdio := flag.String("stdio", "stderr", "Select stdio to replace [stdout, stderr, all]")
 	flag.Parse()
 
 	remainArgs := flag.Args()
@@ -42,6 +42,9 @@ func main() {
 	}
 
 	switch *stdio {
+	case "all":
+		go copyAndReplace(os.Stdout, stdout)
+		go copyAndReplace(os.Stderr, stderr)
 	case "stdout":
 		go copyAndReplace(os.Stdout, stdout)
 		go io.Copy(os.Stderr, stderr)
