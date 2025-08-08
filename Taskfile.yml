@@ -3,7 +3,59 @@ version: '3'
 output: prefixed
 silent: true
 
+dotenv: ['.env', '{{.ENV}}/.env', '{{.HOME}}/.env']
+
+vars:
+  FILE_PREFIX: '{{.PWD}}/.task.'
+
 tasks:
+  release:
+    deps: [release:r2n]
+
+  release:r2n:
+    cmds:
+      - defer: rm -f "{{.FILE_PREFIX}}{{.TASK}}"
+      - task: github:release
+        vars: {TASK: {ref: .TASK}, REPO: dgdsingen/go, TAG_NAME: '{{.R2N_VERSION}}', NAME: r2n}
+      - task: github:release:asset
+        vars: {TASK: {ref: .TASK}, REPO: dgdsingen/go, FILE: r2n-.*}
+
+  github:release:
+    cmds:
+      - >-
+        curl -sL -X POST
+        "https://api.github.com/repos/{{.REPO}}/releases"
+        -H "Authorization: Bearer {{.GH_API_TOKEN}}"
+        -H "X-GitHub-Api-Version: {{.GH_API_VERSION}}"
+        -H "Accept: application/vnd.github+json"
+        -d '{
+          "tag_name": "{{.TAG_NAME}}",
+          "name": "{{.NAME | default .TAG_NAME}}",
+          "target_commitish": "{{.TARGET_COMMITISH | default "main"}}",
+          "body": "{{.BODY | default ""}}",
+          "draft": {{.DRAFT | default false}},
+          "prerelease": {{.PRERELEASE | default false}},
+          "generate_release_notes": {{.GENERATE_RELEASE_NOTES | default false}},
+          "make_latest": "{{.MAKE_LATEST | default true}}"
+        }'
+        -o "{{.FILE_PREFIX}}{{.TASK}}"
+
+  github:release:asset:
+    vars:
+      FILES: {sh: 'fd -t=f -d=1 "{{.FILE}}" "{{.PWD}}/bin/"'}
+      RELEASE_ID: {sh: 'jq ".id" "{{.FILE_PREFIX}}{{.TASK}}"'}
+    cmds:
+      - for: {var: FILES}
+        cmd: >-
+          {{$name := regexReplaceAll ".*/" .ITEM ""}}
+          curl -sL -X POST
+          "https://uploads.github.com/repos/{{.REPO}}/releases/{{.RELEASE_ID}}/assets?name={{$name}}"
+          -H "Authorization: Bearer {{.GH_API_TOKEN}}"
+          -H "X-GitHub-Api-Version: {{.GH_API_VERSION}}"
+          -H "Accept: application/vnd.github+json"
+          -H "Content-Type: application/octet-stream"
+          --data-binary "@{{.ITEM}}"
+
   build:
     deps: [build:r2n]
 
