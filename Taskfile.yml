@@ -75,13 +75,16 @@ tasks:
     deps: [build:r2n]
 
   build:r2n:
-    sources: ['{{.PWD}}/cmd/r2n/*.go']
+    sources: ['{{.PWD}}/cmd/r2n/*.go', '{{.PWD}}/.env']
     generates: ['{{.PWD}}/bin/r2n-*']
+    vars:
+      R2N_LATEST_VERSION: {sh: "rg 'R2N_VERSION=(.*)' -r '$1' -o '{{.PWD}}/.env'"}
     cmds:
       - task: go:build:cross
         vars:
           PACKAGE: ./cmd/r2n
           APP_NAME: r2n
+          CLI_ARGS: -ldflags "-s -w -extldflags '-static' -X main.version={{.R2N_LATEST_VERSION}}" -tags netgo
 
   go:build:cross:
     deps:
@@ -91,6 +94,7 @@ tasks:
           GOARCH: '{{.ITEM.GOARCH}}'
           APP_NAME: {ref: .APP_NAME}
           PACKAGE: {ref: .PACKAGE}
+          CLI_ARGS: {ref: .CLI_ARGS}
         for:
           matrix:
             GOOS: ['darwin', 'linux']
