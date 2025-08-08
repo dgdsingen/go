@@ -10,10 +10,11 @@ r2n은 command의 stdio를 읽어 `\r` 를 `\n` 로 변환해준다.
 다만 라인 단위로 집계가 바뀌기 때문에 `curl -# ...` 과 같이 stderr에 `\n` 대신 `\r` 를 내보내는 경우 \
 curl이 종료되어 `\n` 이 올때까지 stderr가 버퍼링되며 출력되지 않는다. 즉 progress가 전혀 보이지 않게 된다.
 
-이걸 해결하려면 다시 `output: interleaved` 로 돌아가거나 task 별로 `interactive: true` 를 붙여줘야 한다. \
-그럼 다시 로그가 뒤섞이는 이슈가 있으므로 두 단점 중 하나를 안고 갈 수 밖에 없다.
+즉 로그 구분을 하고 싶으면 `output: prefixed` 설정을 해야 하는데 progress가 실시간으로 보이지 않게 되고 \
+progress를 보고 싶으면 `output: interleaved` 혹은 `interactive: true` 설정을 해야 하는데 로그가 뒤섞인다.
 
-r2n은 stderr를 읽어 `\r` 를 `\n` 로 변환해줌으로서 `output: prefixed` 와 실시간 출력을 동시에 가능하게 해준다.
+r2n은 stdio를 읽어 `\r` 를 `\n` 로 변환해줌으로서 \
+`output: prefixed` 에서 라인 단위로 로그를 구분하면서 실시간으로 progress 출력도 가능하게 해준다.
 
 ## install
 
