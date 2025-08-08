@@ -13,8 +13,7 @@ tasks:
     deps: [release:r2n]
 
   release:r2n:
-    sources: ['{{.PWD}}/cmd/r2n/*.go']
-    generates: ['{{.PWD}}/bin/r2n-*']
+    sources: ['{{.PWD}}/.env']
     cmds:
       - defer: rm -f "{{.FILE_PREFIX}}{{.TASK}}"
       - task: github:release
@@ -62,6 +61,8 @@ tasks:
     deps: [build:r2n]
 
   build:r2n:
+    sources: ['{{.PWD}}/cmd/r2n/*.go']
+    generates: ['{{.PWD}}/bin/r2n-*']
     cmds:
       - task: go:build:cross
         vars:
