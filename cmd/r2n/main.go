@@ -9,9 +9,17 @@ import (
 	"strings"
 )
 
+var version = "undefined"
+
 func main() {
+	showVersion := flag.Bool("version", false, "r2n version")
 	stdio := flag.String("stdio", "stderr", "Select stdio to replace [stdout, stderr, all]")
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Printf("version: %s\n", version)
+		return
+	}
 
 	remainArgs := flag.Args()
 	if len(remainArgs) < 1 {
