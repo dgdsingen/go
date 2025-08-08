@@ -31,12 +31,12 @@ GOPROXY=direct go install github.com/dgdsingen/go/cmd/r2n@latest
 ## Usage
 
 ```sh
-r2n curl https://test.com/1.txt
+r2n curl -L https://test.com/1.txt
 ```
 
 원한다면 [stdout, stderr, all] 중 원하는 것을 선택할 수도 있다. \
 (일반적으로 stdout에는 데이터가 전송되므로, r2n은 기본적으로 stderr만 변환한다)
 
 ```sh
-r2n -stdio=stdout -- curl https://test.com/1.txt
+r2n -stdio=stdout -- curl -L https://test.com/1.txt
 ```
