@@ -9,6 +9,20 @@ vars:
   FILE_PREFIX: '{{.PWD}}/.task.'
 
 tasks:
+  test:
+    deps: [test:r2n]
+
+  test:r2n:
+    vars:
+      CMD: curl -O https://cli.my.to/public/1.txt --limit-rate 2K
+    cmds:
+      - defer: rm -f 1.txt
+      - r2n -stdio=stdout -- {{.CMD}} | cat
+      - r2n -stdio=stderr -- {{.CMD}}
+      - r2n -stdio=all -- {{.CMD}}
+      - r2n -- {{.CMD}}
+      - r2n {{.CMD}}
+
   release:
     deps: [release:r2n]
 
