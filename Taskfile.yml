@@ -38,4 +38,4 @@ tasks:
       - >-
         GOOS="{{.GOOS}}"
         GOARCH="{{.GOARCH}}"
-        go build -o "{{.OUTPUT}}" {{.CLI_ARGS}} "{{.PACKAGE}}"
+        go build -o {{.OUTPUT}} {{.CLI_ARGS}} {{.PACKAGE}}
