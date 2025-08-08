@@ -1,0 +1,41 @@
+version: '3'
+
+output: prefixed
+silent: true
+
+tasks:
+  build:
+    deps: [build:r2n]
+
+  build:r2n:
+    cmds:
+      - task: go:build:cross
+        vars:
+          PACKAGE: ./cmd/r2n
+          APP_NAME: r2n
+
+  go:build:cross:
+    deps:
+      - task: go:build
+        vars:
+          GOOS: '{{.ITEM.GOOS}}'
+          GOARCH: '{{.ITEM.GOARCH}}'
+          APP_NAME: {ref: .APP_NAME}
+          PACKAGE: {ref: .PACKAGE}
+        for:
+          matrix:
+            GOOS: ['darwin', 'linux']
+            GOARCH: ['arm64', 'amd64']
+
+  go:build:
+    vars:
+      GOOS: '{{.GOOS | default OS}}'
+      GOARCH: '{{.GOARCH | default ARCH}}'
+      APP_NAME: '{{.APP_NAME | default "app"}}'
+      PACKAGE: '{{.PACKAGE | default "."}}'
+      OUTPUT: '{{.OUTPUT | default (list "./bin/" .APP_NAME "-" .GOOS "-" .GOARCH | join "")}}'
+    cmds:
+      - >-
+        GOOS="{{.GOOS}}"
+        GOARCH="{{.GOARCH}}"
+        go build -o "{{.OUTPUT}}" {{.CLI_ARGS}} "{{.PACKAGE}}"
