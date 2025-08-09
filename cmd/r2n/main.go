@@ -13,7 +13,7 @@ import (
 var version = "undefined"
 
 func main() {
-	stdio := flag.String("stdio", "stderr", "Select stdio to replace [stdout, stderr, all]")
+	stdio := flag.String("stdio", "stderr", "stdio to replace [stdout, stderr, all]")
 	prefix := flag.String("prefix", "", "prefix for each line")
 	showVersion := flag.Bool("version", false, "r2n version")
 	flag.Parse()
