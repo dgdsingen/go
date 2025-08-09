@@ -122,6 +122,7 @@ tasks:
       OUTPUT: '{{.OUTPUT | default (list "./bin/" .APP_NAME "-" .GOOS "-" .GOARCH | join "")}}'
     cmds:
       - >-
+        {{/* android/amd64는 CGO_ENABLED=1을 요구함. 쓸일도 없는데 번거로우니 skip */}}
         {{if and (eq "android" .GOOS) (eq "amd64" .GOARCH)}}
           exit
         {{end}}
