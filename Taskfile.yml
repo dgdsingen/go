@@ -17,7 +17,7 @@ tasks:
       CMD: curl -O https://cli.my.to/public/1.txt --limit-rate 2K
     cmds:
       - defer: rm -f 1.txt
-      - r2n -stdio=stdout -- {{.CMD}} | cat
+      - r2n -stdio=stdout -- {{.CMD}}
       - r2n -stdio=stderr -- {{.CMD}}
       - r2n -stdio=all -- {{.CMD}}
       - r2n -- {{.CMD}}
