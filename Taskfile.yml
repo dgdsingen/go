@@ -42,7 +42,7 @@ tasks:
     cmds:
       - defer: rm -f "{{.FILE_PREFIX}}{{.TASK}}"
       - task: github:release
-        vars: {TASK: {ref: .TASK}, REPO: dgdsingen/go, TAG_NAME: '{{.R2N_VERSION}}', NAME: r2n}
+        vars: {TASK: {ref: .TASK}, REPO: dgdsingen/go, TAG_NAME: '{{.R2N_VERSION}}', NAME: 'r2n {{.R2N_VERSION}}'}
       - task: github:release:asset
         vars: {TASK: {ref: .TASK}, REPO: dgdsingen/go, FILE: r2n-.*}
 
