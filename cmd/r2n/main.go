@@ -27,8 +27,9 @@ func main() {
 	if len(remainArgs) < 1 {
 		usage := strings.Join([]string{
 			"Usage:",
-			"  %s <command> [args...]",
-			"  %s -stdio=stdout -- <command> [args...]",
+			`  %s <command> [args...]`,
+			`  %s -stdio=stdout -- <command> [args...]`,
+			`  %s -prefix="[curl] " -- <command> [args...]`,
 			"\r",
 		}, "\n")
 		fmt.Fprintf(os.Stderr, usage, os.Args[0], os.Args[0])
