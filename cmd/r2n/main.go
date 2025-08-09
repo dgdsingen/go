@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -12,8 +13,9 @@ import (
 var version = "undefined"
 
 func main() {
-	showVersion := flag.Bool("version", false, "r2n version")
 	stdio := flag.String("stdio", "stderr", "Select stdio to replace [stdout, stderr, all]")
+	prefix := flag.String("prefix", "", "prefix for each line")
+	showVersion := flag.Bool("version", false, "r2n version")
 	flag.Parse()
 
 	if *showVersion {
@@ -51,19 +53,19 @@ func main() {
 
 	switch *stdio {
 	case "all":
-		go copyAndReplace(os.Stdout, stdout)
-		go copyAndReplace(os.Stderr, stderr)
+		go copyAndReplace(os.Stdout, stdout, prefix)
+		go copyAndReplace(os.Stderr, stderr, prefix)
 	case "stdout":
-		go copyAndReplace(os.Stdout, stdout)
+		go copyAndReplace(os.Stdout, stdout, prefix)
 		go io.Copy(os.Stderr, stderr)
 	case "stderr":
 		go io.Copy(os.Stdout, stdout)
-		go copyAndReplace(os.Stderr, stderr)
+		go copyAndReplace(os.Stderr, stderr, prefix)
 	default:
 		// stdout은 변환 없이 그대로 전달 (pipe 전달시 데이터 내용이 바뀌면 안됨)
 		go io.Copy(os.Stdout, stdout)
 		// stderr는 변환 후 전달 (curl의 progress bar 출력용)
-		go copyAndReplace(os.Stderr, stderr)
+		go copyAndReplace(os.Stderr, stderr, prefix)
 	}
 
 	if err := cmd.Wait(); err != nil {
@@ -71,16 +73,39 @@ func main() {
 	}
 }
 
-func copyAndReplace(dst io.Writer, src io.Reader) {
+func copyAndReplace(dst io.Writer, src io.Reader, prefix *string) {
 	buf := make([]byte, 4096)
+	out := new(bytes.Buffer)
+	bprefix := []byte(*prefix)
+	br := []byte{'\r'}
+	bn := []byte{'\n'}
+	bnn := []byte{'\n', '\n'}
 	for {
 		n, err := src.Read(buf)
 		if n > 0 {
-			// stderr \r > \n 변환
-			out := strings.ReplaceAll(string(buf[:n]), "\r", "\n")
-			out = strings.ReplaceAll(out, "\n\n", "\n")
-			dst.Write([]byte(out))
+			token := buf[:n]
+			token = bytes.ReplaceAll(token, br, bn)
+			token = bytes.ReplaceAll(token, bnn, bn)
+
+			out.Write(token)
+
+			if !bytes.Contains(token, bn) {
+				continue
+			}
+
+			split := bytes.Split(out.Bytes(), bn)
+			for i, s := range split {
+				if i == len(split)-1 {
+					out.Reset()
+					out.Write(s)
+					break
+				}
+				dst.Write(bprefix)
+				dst.Write(s)
+				dst.Write(bn)
+			}
 		}
+
 		if err != nil {
 			break
 		}

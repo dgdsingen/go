@@ -9,25 +9,36 @@ vars:
   FILE_PREFIX: '{{.PWD}}/.task.'
 
 tasks:
+  bench:
+    deps: [bench:r2n]
+
+  bench:r2n:
+    cmds:
+      - go test ./cmd/r2n -bench=. -benchmem
+
   test:
     deps: [test:r2n]
 
   test:r2n:
     vars:
-      CMD: curl -O https://cli.my.to/public/1.txt --limit-rate 2K
+      R2N: bin/r2n-{{OS}}-{{ARCH}}
+      CMD: curl -O https://cli.my.to/public/1.txt --limit-rate 1500B
     cmds:
       - defer: rm -f 1.txt
-      - r2n -stdio=stdout -- {{.CMD}}
-      - r2n -stdio=stderr -- {{.CMD}}
-      - r2n -stdio=all -- {{.CMD}}
-      - r2n -- {{.CMD}}
-      - r2n {{.CMD}}
+      - task: build
+      - '{{.R2N}} -prefix="[curl] " {{.CMD}}'
+      - '{{.R2N}} -stdio=stdout -- {{.CMD}}'
+      - '{{.R2N}} -stdio=stderr -- {{.CMD}}'
+      - '{{.R2N}} -stdio=all -- {{.CMD}}'
+      - '{{.R2N}} -- {{.CMD}}'
+      - '{{.R2N}} {{.CMD}}'
 
   release:
     deps: [release:r2n]
 
   release:r2n:
     sources: ['{{.PWD}}/.env']
+    method: timestamp
     cmds:
       - defer: rm -f "{{.FILE_PREFIX}}{{.TASK}}"
       - task: github:release
@@ -77,6 +88,7 @@ tasks:
   build:r2n:
     sources: ['{{.PWD}}/cmd/r2n/*.go', '{{.PWD}}/.env']
     generates: ['{{.PWD}}/bin/r2n-*']
+    method: timestamp
     vars:
       R2N_LATEST_VERSION: {sh: "rg 'R2N_VERSION=(.*)' -r '$1' -o '{{.PWD}}/.env'"}
     cmds:
