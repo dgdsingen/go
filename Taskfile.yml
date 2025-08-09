@@ -6,6 +6,7 @@ silent: true
 dotenv: ['.env', '{{.ENV}}/.env', '{{.HOME}}/.env']
 
 vars:
+  OS: '{{ternary "android" OS (any .TERMUX_VERSION)}}'
   FILE_PREFIX: '{{.PWD}}/.task.'
 
 tasks:
@@ -21,7 +22,7 @@ tasks:
 
   test:r2n:
     vars:
-      R2N: bin/r2n-{{OS}}-{{ARCH}}
+      R2N: bin/r2n-{{.OS}}-{{ARCH}}
       CMD: curl -O https://cli.my.to/public/1.txt --limit-rate 1500B
     cmds:
       - defer: rm -f 1.txt
@@ -109,18 +110,22 @@ tasks:
           CLI_ARGS: {ref: .CLI_ARGS}
         for:
           matrix:
-            GOOS: ['darwin', 'linux']
+            GOOS: ['darwin', 'linux', 'android']
             GOARCH: ['arm64', 'amd64']
 
   go:build:
     vars:
-      GOOS: '{{.GOOS | default OS}}'
+      GOOS: '{{.GOOS | default .OS}}'
       GOARCH: '{{.GOARCH | default ARCH}}'
       APP_NAME: '{{.APP_NAME | default "app"}}'
       PACKAGE: '{{.PACKAGE | default "."}}'
       OUTPUT: '{{.OUTPUT | default (list "./bin/" .APP_NAME "-" .GOOS "-" .GOARCH | join "")}}'
     cmds:
       - >-
+        {{if and (eq "android" .GOOS) (eq "amd64" .GOARCH)}}
+          exit
+        {{end}}
+
         GOOS="{{.GOOS}}"
         GOARCH="{{.GOARCH}}"
         go build -o {{.OUTPUT}} {{.CLI_ARGS}} {{.PACKAGE}}
