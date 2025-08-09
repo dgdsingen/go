@@ -40,3 +40,9 @@ r2n curl -L https://test.com/1.txt
 ```sh
 r2n -stdio=stdout -- curl -L https://test.com/1.txt
 ```
+
+매 라인마다 prefix를 붙이고 싶다면 `-prefix` 옵션을 사용한다.
+
+```sh
+r2n -prefix="[curl] " -- curl -L https://test.com/1.txt
+```
