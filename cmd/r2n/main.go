@@ -32,7 +32,7 @@ func main() {
 			`  ` + os.Args[0] + ` -prefix="[curl] " -- <command> [args...]`,
 			"\r",
 		}, "\n")
-		fmt.Fprintf(os.Stderr, usage)
+		fmt.Fprint(os.Stderr, usage)
 		os.Exit(1)
 		return
 	}
