@@ -76,6 +76,8 @@ func main() {
 }
 
 func copyAndReplace(dst io.Writer, src io.Reader, prefix *string) {
+	const maxLineLength = 64 * 1024 // 64KB
+
 	buf := make([]byte, 4096)
 	out := new(bytes.Buffer)
 	// system call을 줄이기 위해 라인 단위로 버퍼링해서 출력
@@ -84,31 +86,38 @@ func copyAndReplace(dst io.Writer, src io.Reader, prefix *string) {
 	br := []byte{'\r'}
 	bn := []byte{'\n'}
 	bnn := []byte{'\n', '\n'}
+
 	for {
 		n, err := src.Read(buf)
 		if n > 0 {
-			token := buf[:n]
-			token = bytes.ReplaceAll(token, br, bn)
-			token = bytes.ReplaceAll(token, bnn, bn)
+			chunk := buf[:n]
+			chunk = bytes.ReplaceAll(chunk, br, bn)
+			chunk = bytes.ReplaceAll(chunk, bnn, bn)
 
-			out.Write(token)
-
-			if !bytes.Contains(token, bn) {
-				continue
-			}
+			out.Write(chunk)
 
 			// 예를 들어 "12\n34\n5" 중 "12", "34"는 각각의 라인으로 잘라서 전송하고
-			// 마지막 5는 아직 라인이 미완성이므로 버퍼에 남겨둠
 			split := bytes.Split(out.Bytes(), bn)
-			last := split[len(split)-1]
 			for _, s := range split[:len(split)-1] {
 				dstBuf.Write(bprefix)
 				dstBuf.Write(s)
 				dstBuf.Write(bn)
 				dstBuf.Flush()
 			}
+
+			// 마지막 5는 아직 라인이 미완성이므로 버퍼에 남겨둠
+			last := split[len(split)-1]
 			out.Reset()
 			out.Write(last)
+
+			// chunk가 '\n' 없이 계속 들어올때 out 무한 증가를 막기 위해 강제 라인처리 + flush
+			if out.Len() > maxLineLength {
+				dstBuf.Write(bprefix)
+				dstBuf.Write(out.Bytes())
+				dstBuf.Write(bn)
+				dstBuf.Flush()
+				out.Reset()
+			}
 		}
 
 		if err != nil {
