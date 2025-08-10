@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"flag"
 	"fmt"
@@ -77,6 +78,8 @@ func main() {
 func copyAndReplace(dst io.Writer, src io.Reader, prefix *string) {
 	buf := make([]byte, 4096)
 	out := new(bytes.Buffer)
+	// system call을 줄이기 위해 라인 단위로 버퍼링해서 출력
+	dstBuf := bufio.NewWriter(dst)
 	bprefix := []byte(*prefix)
 	br := []byte{'\r'}
 	bn := []byte{'\n'}
@@ -94,20 +97,28 @@ func copyAndReplace(dst io.Writer, src io.Reader, prefix *string) {
 				continue
 			}
 
+			// 예를 들어 "12\n34\n5" 중 "12", "34"는 각각의 라인으로 잘라서 전송하고
+			// 마지막 5는 아직 라인이 미완성이므로 버퍼에 남겨둠
 			split := bytes.Split(out.Bytes(), bn)
-			for i, s := range split {
-				if i == len(split)-1 {
-					out.Reset()
-					out.Write(s)
-					break
-				}
-				dst.Write(bprefix)
-				dst.Write(s)
-				dst.Write(bn)
+			last := split[len(split)-1]
+			for _, s := range split[:len(split)-1] {
+				dstBuf.Write(bprefix)
+				dstBuf.Write(s)
+				dstBuf.Write(bn)
+				dstBuf.Flush()
 			}
+			out.Reset()
+			out.Write(last)
 		}
 
 		if err != nil {
+			// '\n' 없이 끝난 경우 강제로 라인 처리해서 내보냄
+			if out.Len() > 0 {
+				dstBuf.Write(bprefix)
+				dstBuf.Write(out.Bytes())
+				dstBuf.Write(bn)
+				dstBuf.Flush()
+			}
 			break
 		}
 	}
