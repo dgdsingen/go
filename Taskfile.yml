@@ -23,7 +23,7 @@ tasks:
   test:r2n:
     vars:
       R2N: bin/r2n-{{.OS}}-{{ARCH}}
-      CMD: sh -c "pv -L 2 {{.PWD}}/test/data/r2n.txt 1>&2"
+      CMD: bash -c "echo -e '1\r2\r3' | pv -L 2 1>&2"
     cmds:
       - defer: rm -f 1.txt
       - task: build
