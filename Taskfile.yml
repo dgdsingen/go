@@ -23,11 +23,12 @@ tasks:
   test:r2n:
     vars:
       R2N: bin/r2n-{{.OS}}-{{ARCH}}
-      CMD: curl -O https://cli.my.to/public/1.txt --limit-rate 1500B
+      CMD: sh -c "pv -L 2 {{.PWD}}/test/data/r2n.txt 1>&2"
     cmds:
       - defer: rm -f 1.txt
       - task: build
-      - '{{.R2N}} -prefix="[curl] " {{.CMD}}'
+      - '{{.CMD}}'
+      - '{{.R2N}} -prefix="[prefix] " {{.CMD}}'
       - '{{.R2N}} -stdio=stdout -- {{.CMD}}'
       - '{{.R2N}} -stdio=stderr -- {{.CMD}}'
       - '{{.R2N}} -stdio=all -- {{.CMD}}'
