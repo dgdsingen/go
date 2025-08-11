@@ -7,31 +7,32 @@ import (
 	"testing"
 )
 
+var (
+	count  = 100000
+	prefix = "[prefix] "
+	dst    = io.Discard
+	// dst = new(bytes.Buffer)
+)
+
 func BenchmarkShortLines(b *testing.B) {
-	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 100), byte('\n')), 100000)
+	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 100), byte('\n')), count)
 	src := bytes.NewReader(data)
-	dst := io.Discard
-	prefix := "[prefix] "
 	for b.Loop() {
 		copyAndReplace(dst, src, &prefix)
 	}
 }
 
 func BenchmarkLongLines(b *testing.B) {
-	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 10000), byte('\n')), 100000)
-	dst := io.Discard
-	src := bytes.NewReader([]byte(data))
-	prefix := "[prefix] "
+	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 10000), byte('\n')), count)
+	src := bytes.NewReader(data)
 	for b.Loop() {
 		copyAndReplace(dst, src, &prefix)
 	}
 }
 
 func BenchmarkMixedLines(b *testing.B) {
-	data := bytes.Repeat([]byte("Hello\r\nWorld\n\n"), 100000)
-	dst := io.Discard
+	data := bytes.Repeat([]byte("Hello\r\nWorld\n\n"), count)
 	src := bytes.NewReader(data)
-	prefix := "[prefix] "
 	for b.Loop() {
 		copyAndReplace(dst, src, &prefix)
 	}
