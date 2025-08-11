@@ -16,7 +16,7 @@ tasks:
   bench:r2n:
     deps: [build]
     cmds:
-      - go test ./cmd/r2n -run=^$ -bench=. -benchmem
+      - go test ./cmd/r2n -run=^$ -bench=. -benchmem | rg Benchmark
 
   test:
     deps: [test:r2n]

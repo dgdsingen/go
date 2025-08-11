@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"io"
 	"os"
 	"testing"
 )
@@ -10,9 +9,9 @@ import (
 var (
 	count  = 100000
 	prefix = "[prefix] "
-	dst    = io.Discard
+	// dst    = io.Discard
 	// dst = new(bytes.Buffer)
-	// dst    = os.Stdout
+	dst = os.Stdout
 )
 
 func BenchmarkShortLines(b *testing.B) {
