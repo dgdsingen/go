@@ -15,8 +15,9 @@ tasks:
 
   bench:r2n:
     deps: [build]
+    interactive: true
     cmds:
-      - go test ./cmd/r2n -run=^$ -bench=. -benchmem | rg Benchmark
+      - go test ./cmd/r2n -run=^$ -bench=. -benchmem | rg 'Benchmark|allocs'
 
   test:
     deps: [test:r2n]
