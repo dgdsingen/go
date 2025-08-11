@@ -12,6 +12,7 @@ var (
 	prefix = "[prefix] "
 	dst    = io.Discard
 	// dst = new(bytes.Buffer)
+	// dst    = os.Stdout
 )
 
 func BenchmarkShortLines(b *testing.B) {
