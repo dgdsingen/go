@@ -9,10 +9,20 @@ import (
 
 func BenchmarkCopyAndReplace(b *testing.B) {
 	data := bytes.Repeat([]byte("Hello\r\nWorld\n\n"), 200000) // 10MB
+	src := bytes.NewReader(data)
+	dst := io.Discard
 	prefix := "[prefix] "
 	for b.Loop() {
-		src := bytes.NewReader(data)
-		dst := io.Discard
+		copyAndReplace(dst, src, &prefix)
+	}
+}
+
+func BenchmarkLongLine(b *testing.B) {
+	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 10000), byte('\n')), 100000)
+	dst := io.Discard
+	src := bytes.NewReader([]byte(data))
+	prefix := "[prefix] "
+	for b.Loop() {
 		copyAndReplace(dst, src, &prefix)
 	}
 }
@@ -28,6 +38,6 @@ if out.Len() > maxLineLength 조건문이 없으면 out.Len()이 무한 증식�
 func TestLongLine(t *testing.T) {
 	data := bytes.Repeat([]byte{'X'}, 100000) // 100KB without '\r' or '\n'
 	src := bytes.NewReader([]byte(data))
-	prefix := "[test] "
+	prefix := "[prefix] "
 	copyAndReplace(os.Stdout, src, &prefix)
 }
