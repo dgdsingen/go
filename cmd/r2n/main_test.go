@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"io"
 	"os"
 	"testing"
 )
@@ -11,8 +12,8 @@ func BenchmarkCopyAndReplace(b *testing.B) {
 	prefix := "[prefix] "
 	for b.Loop() {
 		src := bytes.NewReader(data)
-		var dst bytes.Buffer
-		copyAndReplace(&dst, src, &prefix)
+		dst := io.Discard
+		copyAndReplace(dst, src, &prefix)
 	}
 }
 
