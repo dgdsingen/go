@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func BenchmarkShortLine(b *testing.B) {
+func BenchmarkShortLines(b *testing.B) {
 	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 100), byte('\n')), 100000)
 	src := bytes.NewReader(data)
 	dst := io.Discard
@@ -17,10 +17,20 @@ func BenchmarkShortLine(b *testing.B) {
 	}
 }
 
-func BenchmarkLongLine(b *testing.B) {
+func BenchmarkLongLines(b *testing.B) {
 	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 10000), byte('\n')), 100000)
 	dst := io.Discard
 	src := bytes.NewReader([]byte(data))
+	prefix := "[prefix] "
+	for b.Loop() {
+		copyAndReplace(dst, src, &prefix)
+	}
+}
+
+func BenchmarkMixedLines(b *testing.B) {
+	data := bytes.Repeat([]byte("Hello\r\nWorld\n\n"), 100000)
+	dst := io.Discard
+	src := bytes.NewReader(data)
 	prefix := "[prefix] "
 	for b.Loop() {
 		copyAndReplace(dst, src, &prefix)
