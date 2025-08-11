@@ -17,25 +17,19 @@ var (
 func BenchmarkShortLines(b *testing.B) {
 	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 100), byte('\n')), count)
 	src := bytes.NewReader(data)
-	for b.Loop() {
-		copyAndReplace(dst, src, prefix)
-	}
+	copyAndReplace(dst, src, prefix)
 }
 
 func BenchmarkLongLines(b *testing.B) {
 	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 10000), byte('\n')), count)
 	src := bytes.NewReader(data)
-	for b.Loop() {
-		copyAndReplace(dst, src, prefix)
-	}
+	copyAndReplace(dst, src, prefix)
 }
 
 func BenchmarkMixedLines(b *testing.B) {
 	data := bytes.Repeat([]byte("Hello\r\nWorld\n\n"), count)
 	src := bytes.NewReader(data)
-	for b.Loop() {
-		copyAndReplace(dst, src, prefix)
-	}
+	copyAndReplace(dst, src, prefix)
 }
 
 /*
