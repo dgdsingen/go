@@ -83,11 +83,7 @@ func main() {
 }
 
 func replaceRN(bs []byte) []byte {
-	if len(bs) == 0 {
-		return bs
-	}
-
-	buf := new(bytes.Buffer)
+	p := 0
 	prev := byte(0)
 	for _, b := range bs {
 		if b == '\r' {
@@ -96,11 +92,11 @@ func replaceRN(bs []byte) []byte {
 		if b == '\n' && prev == '\n' {
 			continue
 		}
-		buf.WriteByte(b)
+		bs[p] = b
+		p++
 		prev = b
 	}
-
-	return buf.Bytes()
+	return bs[:p]
 }
 
 func writeAndFlushAll(dst *bufio.Writer, bs ...[]byte) {
