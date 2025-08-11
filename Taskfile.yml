@@ -36,7 +36,7 @@ tasks:
       - '{{.R2N}} -- {{.CMD}}'
       - '{{.R2N}} {{.CMD}}'
       # long-line test: len(out) > maxLineLength 이면 강제로 \n 넣어서 라인 write + flush
-      - go test -v ./cmd/r2n > 1.txt; rg '\[test\] ' 1.txt | wc -l
+      - go test -v ./cmd/r2n > 1.txt; rg '\[prefix\] ' 1.txt | wc -l
 
   release:
     deps: [release:r2n]
