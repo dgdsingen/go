@@ -14,19 +14,20 @@ tasks:
     deps: [bench:r2n]
 
   bench:r2n:
+    deps: [build]
     cmds:
-      - go test ./cmd/r2n -bench=. -benchmem
+      - go test ./cmd/r2n -run=^$ -bench=. -benchmem
 
   test:
     deps: [test:r2n]
 
   test:r2n:
+    deps: [build]
     vars:
       R2N: bin/r2n-{{.OS}}-{{ARCH}}
       CMD: bash -c "echo -e '1\r2\r3' | pv -L 2 1>&2"
     cmds:
       - defer: rm -f 1.txt
-      - task: build
       - '{{.CMD}}'
       - '{{.R2N}} -prefix="[prefix] " {{.CMD}}'
       - '{{.R2N}} -stdio=stdout -- {{.CMD}}'

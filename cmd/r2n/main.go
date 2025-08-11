@@ -82,7 +82,28 @@ func main() {
 	}
 }
 
-func writeFlushAll(dst *bufio.Writer, bs ...[]byte) {
+func replaceRN(bs []byte) []byte {
+	if len(bs) == 0 {
+		return bs
+	}
+
+	buf := new(bytes.Buffer)
+	prev := byte(0)
+	for _, b := range bs {
+		if b == '\r' {
+			b = '\n'
+		}
+		if b == '\n' && prev == '\n' {
+			continue
+		}
+		buf.WriteByte(b)
+		prev = b
+	}
+
+	return buf.Bytes()
+}
+
+func writeAndFlushAll(dst *bufio.Writer, bs ...[]byte) {
 	for _, b := range bs {
 		dst.Write(b)
 	}
@@ -97,23 +118,20 @@ func copyAndReplace(dst io.Writer, src io.Reader, prefix *string) {
 	// system call을 줄이기 위해 라인 단위로 버퍼링해서 출력
 	dstBuf := bufio.NewWriter(dst)
 	bprefix := []byte(*prefix)
-	br := []byte{'\r'}
 	bn := []byte{'\n'}
-	bnn := []byte{'\n', '\n'}
 
 	for {
 		n, err := src.Read(buf)
 		if n > 0 {
 			chunk := buf[:n]
-			chunk = bytes.ReplaceAll(chunk, br, bn)
-			chunk = bytes.ReplaceAll(chunk, bnn, bn)
+			chunk = replaceRN(chunk)
 
 			out.Write(chunk)
 
 			// 예를 들어 "12\n34\n5" 중 "12", "34"는 각각의 라인으로 잘라서 전송하고
 			split := bytes.Split(out.Bytes(), bn)
 			for _, s := range split[:len(split)-1] {
-				writeFlushAll(dstBuf, bprefix, s, bn)
+				writeAndFlushAll(dstBuf, bprefix, s, bn)
 			}
 
 			// 마지막 5는 아직 라인이 미완성이므로 버퍼에 남겨둠
@@ -123,7 +141,7 @@ func copyAndReplace(dst io.Writer, src io.Reader, prefix *string) {
 
 			// chunk가 '\n' 없이 계속 들어올때 out 무한 증가를 막기 위해 강제 라인처리 + flush
 			if out.Len() > maxLineLength {
-				writeFlushAll(dstBuf, bprefix, out.Bytes(), bn)
+				writeAndFlushAll(dstBuf, bprefix, out.Bytes(), bn)
 				out.Reset()
 			}
 		}
@@ -131,7 +149,7 @@ func copyAndReplace(dst io.Writer, src io.Reader, prefix *string) {
 		if err != nil {
 			// '\n' 없이 끝난 경우 강제로 라인 처리해서 내보냄
 			if out.Len() > 0 {
-				writeFlushAll(dstBuf, bprefix, out.Bytes(), bn)
+				writeAndFlushAll(dstBuf, bprefix, out.Bytes(), bn)
 			}
 			break
 		}
