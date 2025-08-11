@@ -11,45 +11,52 @@ import (
 	"strings"
 )
 
+var appName = "r2n"
 var version = "undefined"
+
+func fmtVersion() string {
+	return fmt.Sprintf("%s %s", appName, version)
+}
 
 func main() {
 	stdio := flag.String("stdio", "stderr", "stdio to replace [stdout, stderr, all]")
 	prefix := flag.String("prefix", "", "prefix for each line")
-	showVersion := flag.Bool("version", false, "r2n version")
+	versionFlag := flag.Bool("version", false, "r2n version")
 	flag.Parse()
 
-	if *showVersion {
-		fmt.Printf("version: %s\n", version)
+	if *versionFlag {
+		fmt.Println(fmtVersion())
 		return
 	}
 
-	remainArgs := flag.Args()
-	if len(remainArgs) < 1 {
+	cmd := os.Args[0]
+	args := flag.Args()
+	if len(args) == 0 {
 		usage := strings.Join([]string{
+			fmtVersion(), "",
 			"Usage:",
-			`  ` + os.Args[0] + ` <command> [args...]`,
-			`  ` + os.Args[0] + ` -stdio=stdout -- <command> [args...]`,
-			`  ` + os.Args[0] + ` -prefix="[curl] " -- <command> [args...]`,
-			"\r",
+			"  " + cmd + " <command> [args...]",
+			"  " + cmd + " -stdio=stdout -- <command> [args...]",
+			"  " + cmd + ` -prefix="[curl] " -- <command> [args...]`,
+			"",
 		}, "\n")
 		fmt.Fprint(os.Stderr, usage)
 		os.Exit(1)
 		return
 	}
 
-	cmd := exec.Command(remainArgs[0], remainArgs[1:]...)
+	subCmd := exec.Command(args[0], args[1:]...)
 
-	stdout, err := cmd.StdoutPipe()
+	stdout, err := subCmd.StdoutPipe()
 	if err != nil {
 		panic(err)
 	}
-	stderr, err := cmd.StderrPipe()
+	stderr, err := subCmd.StderrPipe()
 	if err != nil {
 		panic(err)
 	}
 
-	if err := cmd.Start(); err != nil {
+	if err := subCmd.Start(); err != nil {
 		panic(err)
 	}
 
@@ -70,8 +77,8 @@ func main() {
 		go copyAndReplace(os.Stderr, stderr, prefix)
 	}
 
-	if err := cmd.Wait(); err != nil {
-		os.Exit(cmd.ProcessState.ExitCode())
+	if err := subCmd.Wait(); err != nil {
+		os.Exit(subCmd.ProcessState.ExitCode())
 	}
 }
 
