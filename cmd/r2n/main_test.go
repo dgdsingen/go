@@ -7,8 +7,8 @@ import (
 	"testing"
 )
 
-func BenchmarkCopyAndReplace(b *testing.B) {
-	data := bytes.Repeat([]byte("Hello\r\nWorld\n\n"), 200000) // 10MB
+func BenchmarkShortLine(b *testing.B) {
+	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 100), byte('\n')), 100000)
 	src := bytes.NewReader(data)
 	dst := io.Discard
 	prefix := "[prefix] "
