@@ -9,8 +9,8 @@ import (
 var (
 	count  = 100000
 	prefix = "[prefix] "
-	// dst    = io.Discard
 	// dst = new(bytes.Buffer)
+	// dst = io.Discard
 	dst = os.Stdout
 )
 
@@ -48,6 +48,23 @@ func BenchmarkMixedLinesSlice(b *testing.B) {
 	data := bytes.Repeat([]byte("Hello\r\nWorld\n\n"), count)
 	src := bytes.NewReader(data)
 	copyAndReplaceSlice(dst, src, prefix)
+}
+
+func BenchmarkShortLinesCut(b *testing.B) {
+	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 100), byte('\n')), count)
+	src := bytes.NewReader(data)
+	copyAndReplaceCut(dst, src, prefix)
+}
+func BenchmarkLongLinesCut(b *testing.B) {
+	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 10000), byte('\n')), count)
+	src := bytes.NewReader(data)
+	copyAndReplaceCut(dst, src, prefix)
+}
+
+func BenchmarkMixedLinesCut(b *testing.B) {
+	data := bytes.Repeat([]byte("Hello\r\nWorld\n\n"), count)
+	src := bytes.NewReader(data)
+	copyAndReplaceCut(dst, src, prefix)
 }
 
 /*
