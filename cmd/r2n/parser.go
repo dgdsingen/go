@@ -28,14 +28,13 @@ func parseCuts(dst io.Writer, src io.Reader, prefix string) {
 					// 못찾았으면 '\n' 로 다시 Cut
 					before, after, found = bytes.Cut(sBytes, bn)
 				}
-				if found {
-					if len(before) > 0 {
-						dst.Write(concatBytes(line, bprefix, before, bn))
-					}
-					sBytes = after
-				} else {
+				if !found {
 					break
 				}
+				if len(before) > 0 {
+					dst.Write(concatBytes(line, bprefix, before, bn))
+				}
+				sBytes = after
 			}
 
 			// 마지막 5는 아직 라인이 미완성이므로 버퍼에 남겨둠
