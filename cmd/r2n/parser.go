@@ -1,3 +1,6 @@
+// parser.go = 현재 사용되는 parser
+// bytes.Cut()만 2회 호출하는 버전
+// 성능과 메모리 효율성이 가장 뛰어남
 package main
 
 import (
@@ -25,7 +28,6 @@ func copyAndReplace(dst io.Writer, src io.Reader, prefix string) {
 					// 못찾았으면 '\n' 로 다시 Cut
 					before, after, found = bytes.Cut(sBytes, bn)
 				}
-
 				if found {
 					if len(before) > 0 {
 						dst.Write(concatBytes(line, bprefix, before, bn))

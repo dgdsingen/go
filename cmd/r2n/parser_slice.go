@@ -1,3 +1,5 @@
+// bytes.Join() + slice 버전
+// slice 재할당이 너무 많이 일어나서 성능과 메모리 효율성 낮음
 package main
 
 import (
