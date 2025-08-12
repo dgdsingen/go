@@ -55,6 +55,7 @@ func BenchmarkShortLinesCut(b *testing.B) {
 	src := bytes.NewReader(data)
 	copyAndReplaceCut(dst, src, prefix)
 }
+
 func BenchmarkLongLinesCut(b *testing.B) {
 	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 10000), byte('\n')), count)
 	src := bytes.NewReader(data)
