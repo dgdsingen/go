@@ -6,16 +6,10 @@ import (
 )
 
 func copyAndReplaceCut(dst io.Writer, src io.Reader, prefix string) {
-	const maxLineLength = 64 * 1024 // 64KB
-
 	buf := make([]byte, 4096)
 	stream := new(bytes.Buffer)
 	line := new(bytes.Buffer)
-
 	bprefix := []byte(prefix)
-	bn := []byte{'\n'}
-	br := []byte{'\r'}
-	bnn := []byte{'\n', '\n'}
 
 	for {
 		n, err := src.Read(buf)

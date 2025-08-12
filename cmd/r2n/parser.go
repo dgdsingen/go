@@ -5,25 +5,11 @@ import (
 	"io"
 )
 
-func concatBytes(line *bytes.Buffer, bs ...[]byte) []byte {
-	// system call을 줄이기 위해 라인 단위로 버퍼링해서 출력. 이게 bufio.Writer 보다 빠름
-	defer line.Reset()
-	for _, b := range bs {
-		line.Write(b)
-	}
-	return line.Bytes()
-}
-
 func copyAndReplace(dst io.Writer, src io.Reader, prefix string) {
-	const maxLineLength = 64 * 1024 // 64KB
-
 	buf := make([]byte, 4096)
 	stream := new(bytes.Buffer)
 	line := new(bytes.Buffer)
-
 	bprefix := []byte(prefix)
-	bn := []byte{'\n'}
-	br := []byte{'\r'}
 
 	for {
 		n, err := src.Read(buf)
