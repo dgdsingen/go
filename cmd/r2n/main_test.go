@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"io"
 	"os"
 	"testing"
 )
@@ -13,6 +14,13 @@ var (
 	// dst = io.Discard
 	dst = os.Stdout
 )
+
+// Benchmark warm-up
+func BenchmarkInit(b *testing.B) {
+	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 10000), byte('\n')), count)
+	src := bytes.NewReader(data)
+	io.Copy(io.Discard, src)
+}
 
 func BenchmarkShortLines(b *testing.B) {
 	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 100), byte('\n')), count)
