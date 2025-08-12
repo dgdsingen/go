@@ -29,13 +29,6 @@ func copyAndReplaceCut(dst io.Writer, src io.Reader, prefix string) {
 			chunk = bytes.ReplaceAll(chunk, bnn, bn)
 			stream.Write(chunk)
 
-			// chunk가 '\n' 없이 계속 들어올때 out 무한 증가를 막기 위해 강제 라인처리 + flush
-			if stream.Len() > maxLineLength {
-				dst.Write(concatBytes(line, bprefix, stream.Bytes(), bn))
-				stream.Reset()
-				continue
-			}
-
 			// 예를 들어 "12\n34\n5" 중 "12", "34"는 각각의 라인으로 잘라서 전송하고
 			sBytes := stream.Bytes()
 			for {
@@ -54,6 +47,12 @@ func copyAndReplaceCut(dst io.Writer, src io.Reader, prefix string) {
 			// 마지막 5는 아직 라인이 미완성이므로 버퍼에 남겨둠
 			stream.Reset()
 			stream.Write(sBytes)
+
+			// chunk가 '\n' 없이 계속 들어올때 out 무한 증가를 막기 위해 강제 라인처리 + flush
+			if stream.Len() > maxLineLength {
+				dst.Write(concatBytes(line, bprefix, stream.Bytes(), bn))
+				stream.Reset()
+			}
 		}
 
 		if err != nil {
