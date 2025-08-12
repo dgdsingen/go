@@ -39,6 +39,14 @@ func copyAndReplaceSlice(dst io.Writer, src io.Reader, prefix string) {
 			chunk = replaceRN(chunk)
 			out = bytes.Join([][]byte{out, chunk}, nil)
 
+			// chunk가 '\n' 없이 계속 들어올때 out 무한 증가를 막기 위해 강제 라인처리 + flush
+			if len(out) > maxLineLength {
+				line := bytes.Join([][]byte{bprefix, out, bn}, nil)
+				dst.Write(line)
+				out = out[:0]
+				continue
+			}
+
 			// 예를 들어 "12\n34\n5" 중 "12", "34"는 각각의 라인으로 잘라서 전송하고
 			p := 0
 			for i, b := range out {
@@ -53,13 +61,6 @@ func copyAndReplaceSlice(dst io.Writer, src io.Reader, prefix string) {
 			if p < len(out) {
 				out = out[p:]
 			} else {
-				out = out[:0]
-			}
-
-			// chunk가 '\n' 없이 계속 들어올때 out 무한 증가를 막기 위해 강제 라인처리 + flush
-			if len(out) > maxLineLength {
-				line := bytes.Join([][]byte{bprefix, out, bn}, nil)
-				dst.Write(line)
 				out = out[:0]
 			}
 		}
