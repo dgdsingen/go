@@ -28,6 +28,7 @@ func copyAndReplaceSlice(dst io.Writer, src io.Reader, prefix string) {
 	buf := make([]byte, 4096)
 	// len > 0 이면 slice가 zero value로 채워져서 이상하게 출력될 수 있으므로 0으로 설정
 	out := make([]byte, 0, 4096)
+
 	bprefix := []byte(prefix)
 	bn := []byte{'\n'}
 
