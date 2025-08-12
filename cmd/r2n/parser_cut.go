@@ -15,15 +15,11 @@ func copyAndReplaceCut(dst io.Writer, src io.Reader, prefix string) {
 	bprefix := []byte(prefix)
 	bn := []byte{'\n'}
 	br := []byte{'\r'}
-	bnn := []byte{'\n', '\n'}
 
 	for {
 		n, err := src.Read(buf)
 		if n > 0 {
 			chunk := buf[:n]
-			// chunk = replaceRN(chunk)
-			chunk = bytes.ReplaceAll(chunk, br, bn)
-			chunk = bytes.ReplaceAll(chunk, bnn, bn)
 			stream.Write(chunk)
 
 			// chunk가 '\n' 없이 계속 들어올때 out 무한 증가를 막기 위해 강제 라인처리 + flush
@@ -39,8 +35,18 @@ func copyAndReplaceCut(dst io.Writer, src io.Reader, prefix string) {
 			// 예를 들어 "12\n34\n5" 중 "12", "34"는 각각의 라인으로 잘라서 전송하고
 			sBytes := stream.Bytes()
 			for {
-				before, after, found := bytes.Cut(sBytes, bn)
+				// '\r' 로 먼저 Cut 해보고
+				before, after, found := bytes.Cut(sBytes, br)
+				if !found {
+					// 못찾았으면 '\n' 로 다시 Cut
+					before, after, found = bytes.Cut(sBytes, bn)
+				}
+
 				if found {
+					// '1\n\n2' 를
+					if len(before) == 0 {
+						continue
+					}
 					dst.Write(concatBytes(line, bprefix, before, bn))
 					sBytes = after
 
