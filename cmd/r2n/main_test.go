@@ -16,7 +16,7 @@ var (
 )
 
 // Benchmark warm-up
-func BenchmarkInit(b *testing.B) {
+func BenchmarkWarmUp(b *testing.B) {
 	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 10000), byte('\n')), count)
 	src := bytes.NewReader(data)
 	io.Copy(io.Discard, src)
