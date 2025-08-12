@@ -42,6 +42,10 @@ func copyAndReplaceCut(dst io.Writer, src io.Reader, prefix string) {
 					before, after, found = bytes.Cut(sBytes, bn)
 				}
 
+				// fmt.Printf("----\n")
+				// fmt.Printf("%v %q(%d) %q(%d)\n", found, before, len(before), after, len(after))
+				// fmt.Printf("----\n")
+
 				if found {
 					// '1\n\n2' 를
 					if len(before) == 0 {
