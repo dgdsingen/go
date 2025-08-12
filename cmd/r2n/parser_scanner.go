@@ -1,3 +1,4 @@
+// bufio.Scanner() 버전. 미완성.
 package main
 
 import (
@@ -24,7 +25,7 @@ func splitRN() bufio.SplitFunc {
 	}
 }
 
-func copyAndReplaceBufio(dst io.Writer, src io.Reader, prefix string) {
+func parseScanner(dst io.Writer, src io.Reader, prefix string) {
 	scanner := bufio.NewScanner(src)
 	scanner.Split(splitRN())
 

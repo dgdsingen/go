@@ -9,15 +9,6 @@ import (
 	"strings"
 )
 
-var (
-	appName = "r2n"
-	version = "undefined"
-)
-
-func fmtVersion() string {
-	return fmt.Sprintf("%s %s", appName, version)
-}
-
 func main() {
 	stdio := flag.String("stdio", "stderr", "stdio to replace [stdout, stderr, all]")
 	prefix := flag.String("prefix", "", "prefix for each line")
@@ -62,19 +53,19 @@ func main() {
 
 	switch *stdio {
 	case "all":
-		go copyAndReplace(os.Stdout, stdout, *prefix)
-		go copyAndReplace(os.Stderr, stderr, *prefix)
+		go parseCuts(os.Stdout, stdout, *prefix)
+		go parseCuts(os.Stderr, stderr, *prefix)
 	case "stdout":
-		go copyAndReplace(os.Stdout, stdout, *prefix)
+		go parseCuts(os.Stdout, stdout, *prefix)
 		go io.Copy(os.Stderr, stderr)
 	case "stderr":
 		go io.Copy(os.Stdout, stdout)
-		go copyAndReplace(os.Stderr, stderr, *prefix)
+		go parseCuts(os.Stderr, stderr, *prefix)
 	default:
 		// stdout은 변환 없이 그대로 전달 (pipe 전달시 데이터 내용이 바뀌면 안됨)
 		go io.Copy(os.Stdout, stdout)
 		// stderr는 변환 후 전달 (curl의 progress bar 출력용)
-		go copyAndReplace(os.Stderr, stderr, *prefix)
+		go parseCuts(os.Stderr, stderr, *prefix)
 	}
 
 	if err := subCmd.Wait(); err != nil {

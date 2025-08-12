@@ -2,11 +2,16 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // fmt.Printf("----\n")
 // fmt.Printf("%v %q(%d) %q(%d)\n", found, before, len(before), after, len(after))
 // fmt.Printf("----\n")
+
+func fmtVersion() string {
+	return fmt.Sprintf("%s %s", appName, version)
+}
 
 func replaceRN(bs []byte) []byte {
 	p := 0

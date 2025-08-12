@@ -17,7 +17,10 @@ tasks:
     deps: [build]
     interactive: true
     cmds:
-      - go test ./cmd/r2n -run=^$ -bench=. -benchmem -cpuprofile=cpu.prof -memprofile=mem.prof | rg 'Benchmark|allocs' | rg '\[prefix\].*' -r '' --passthru
+      - |
+        go test ./cmd/r2n -run=^$ -bench=. -benchmem -cpuprofile=cpu.prof -memprofile=mem.prof |
+          rg 'Benchmark|allocs' |
+          rg '\[prefix\].*' -r '' --passthru
 
   test:
     deps: [test:r2n]

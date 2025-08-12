@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-func copyAndReplaceSplit(dst io.Writer, src io.Reader, prefix string) {
+func parseReplaceSplit(dst io.Writer, src io.Reader, prefix string) {
 	buf := make([]byte, 4096)
 	stream := new(bytes.Buffer)
 	line := new(bytes.Buffer)

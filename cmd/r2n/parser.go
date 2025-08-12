@@ -1,5 +1,5 @@
 // parser.go = 현재 사용되는 parser
-// bytes.Cut()만 2회 호출하는 버전
+// bytes.Cut()만 n회 호출하는 버전
 // 성능과 메모리 효율성이 가장 뛰어남
 package main
 
@@ -8,7 +8,7 @@ import (
 	"io"
 )
 
-func copyAndReplace(dst io.Writer, src io.Reader, prefix string) {
+func parseCuts(dst io.Writer, src io.Reader, prefix string) {
 	buf := make([]byte, 4096)
 	stream := new(bytes.Buffer)
 	line := new(bytes.Buffer)
