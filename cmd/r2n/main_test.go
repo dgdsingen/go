@@ -32,6 +32,24 @@ func BenchmarkMixedLines(b *testing.B) {
 	copyAndReplace(dst, src, prefix)
 }
 
+func BenchmarkShortLinesSlice(b *testing.B) {
+	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 100), byte('\n')), count)
+	src := bytes.NewReader(data)
+	copyAndReplaceSlice(dst, src, prefix)
+}
+
+func BenchmarkLongLinesSlice(b *testing.B) {
+	data := bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 10000), byte('\n')), count)
+	src := bytes.NewReader(data)
+	copyAndReplaceSlice(dst, src, prefix)
+}
+
+func BenchmarkMixedLinesSlice(b *testing.B) {
+	data := bytes.Repeat([]byte("Hello\r\nWorld\n\n"), count)
+	src := bytes.NewReader(data)
+	copyAndReplaceSlice(dst, src, prefix)
+}
+
 /*
 r2n -prefix="[sh] " -stdio=stdout -- sh -c 'yes 1 | tr -d "\n" | head -c 100000'
 과 같이 테스트 해봤는데 항상 4096B 에서 잘리는 것을 확인.
