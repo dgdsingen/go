@@ -1,3 +1,5 @@
+// bytes.IndexAny() 버전
+// bytes.Cut() 2회 반복에 비해 1번만 반복하고 index로 연산하기에 더 빠를 줄 알았으나 성능과 메모리 면에서 모두 밀림
 package main
 
 import (
