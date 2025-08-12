@@ -5,9 +5,9 @@ import (
 	"io"
 )
 
-func concatBytes(bs ...[]byte) []byte {
+func concatBytes(line *bytes.Buffer, bs ...[]byte) []byte {
 	// system call을 줄이기 위해 라인 단위로 버퍼링해서 출력. 이게 bufio.Writer 보다 빠름
-	line := new(bytes.Buffer)
+	defer line.Reset()
 	for _, b := range bs {
 		line.Write(b)
 	}
@@ -19,6 +19,7 @@ func copyAndReplace(dst io.Writer, src io.Reader, prefix string) {
 
 	buf := make([]byte, 4096)
 	stream := new(bytes.Buffer)
+	line := new(bytes.Buffer)
 
 	bprefix := []byte(prefix)
 	br := []byte{'\r'}
@@ -36,7 +37,7 @@ func copyAndReplace(dst io.Writer, src io.Reader, prefix string) {
 			// 예를 들어 "12\n34\n5" 중 "12", "34"는 각각의 라인으로 잘라서 전송하고
 			split := bytes.Split(stream.Bytes(), bn)
 			for _, s := range split[:len(split)-1] {
-				dst.Write(concatBytes(bprefix, s, bn))
+				dst.Write(concatBytes(line, bprefix, s, bn))
 			}
 
 			// 마지막 5는 아직 라인이 미완성이므로 버퍼에 남겨둠
@@ -46,7 +47,7 @@ func copyAndReplace(dst io.Writer, src io.Reader, prefix string) {
 
 			// chunk가 '\n' 없이 계속 들어올때 out 무한 증가를 막기 위해 강제 라인처리 + flush
 			if stream.Len() > maxLineLength {
-				dst.Write(concatBytes(bprefix, stream.Bytes(), bn))
+				dst.Write(concatBytes(line, bprefix, stream.Bytes(), bn))
 				stream.Reset()
 			}
 		}
@@ -54,7 +55,7 @@ func copyAndReplace(dst io.Writer, src io.Reader, prefix string) {
 		if err != nil {
 			// '\n' 없이 끝난 경우 강제로 라인 처리해서 내보냄
 			if stream.Len() > 0 {
-				dst.Write(concatBytes(bprefix, stream.Bytes(), bn))
+				dst.Write(concatBytes(line, bprefix, stream.Bytes(), bn))
 			}
 			break
 		}
