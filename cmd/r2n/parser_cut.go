@@ -5,10 +5,6 @@ import (
 	"io"
 )
 
-// fmt.Printf("----\n")
-// fmt.Printf("%v %q(%d) %q(%d)\n", found, before, len(before), after, len(after))
-// fmt.Printf("----\n")
-
 func copyAndReplaceCut(dst io.Writer, src io.Reader, prefix string) {
 	const maxLineLength = 64 * 1024 // 64KB
 

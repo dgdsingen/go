@@ -5,23 +5,6 @@ import (
 	"io"
 )
 
-func replaceRN(bs []byte) []byte {
-	p := 0
-	prev := byte(0)
-	for _, b := range bs {
-		if b == '\r' {
-			b = '\n'
-		}
-		if b == '\n' && prev == '\n' {
-			continue
-		}
-		bs[p] = b
-		p++
-		prev = b
-	}
-	return bs[:p]
-}
-
 func copyAndReplaceSlice(dst io.Writer, src io.Reader, prefix string) {
 	const maxLineLength = 64 * 1024 // 64KB
 
