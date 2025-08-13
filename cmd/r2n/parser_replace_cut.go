@@ -18,6 +18,7 @@ func parseReplaceCut(dst io.Writer, src io.Reader, prefix string) {
 		if n > 0 {
 			chunk := buf[:n]
 			chunk = bytes.ReplaceAll(chunk, br, bn)
+			// 의도된 \n\n도 치환되버릴수 있음
 			chunk = bytes.ReplaceAll(chunk, bnn, bn)
 			stream.Write(chunk)
 
