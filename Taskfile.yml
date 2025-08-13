@@ -18,10 +18,11 @@ tasks:
     interactive: true
     cmds:
       - |
-        go test ./cmd/r2n -run=^$ -bench=. -benchmem -cpuprofile=cpu.prof -memprofile=mem.prof |
-          rg 'Benchmark|allocs' |
+        # go test ./cmd/r2n -run=^$ -bench=. -benchmem -cpuprofile=cpu.prof -memprofile=mem.prof |
+        go test ./cmd/r2n -run=^$ -bench=. -benchmem |
+          rg 'Benchmark|allocs/op' |
           rg '\[prefix\].*' -r '' --passthru |
-          rg '\n^([ 0-9].*)' -r '$1' -U --passthru |
+          rg '\n(\s*[0-9].*)' -r '$1' -U --passthru |
           sort
 
   test:
