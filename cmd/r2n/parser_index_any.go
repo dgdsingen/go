@@ -24,9 +24,10 @@ func parseIndexAny(dst io.Writer, src io.Reader, prefix string) {
 				// IndexAny를 IndexByte로 바꾸면 성능이 좋아지지만 그럴거면 그냥 Cut 써도됨
 				if found := bytes.IndexAny(sBytes, "\r\n"); found != -1 {
 					before, after := sBytes[:found], sBytes[found+1:]
-					if len(before) > 0 {
-						dst.Write(concatBytes(line, bprefix, before, bn))
-					}
+					// 의도된 '\n\n' 도 치환되버릴수 있음
+					// if len(before) > 0 {
+					dst.Write(concatBytes(line, bprefix, before, bn))
+					// }
 					sBytes = after
 				} else {
 					break

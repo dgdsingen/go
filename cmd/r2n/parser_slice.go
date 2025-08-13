@@ -24,9 +24,10 @@ func parseSlice(dst io.Writer, src io.Reader, prefix string) {
 				// '\r', '\n' 둘 다 검색
 				if sBytes[i] == '\r' || sBytes[i] == '\n' {
 					before, after := sBytes[:i], sBytes[i+1:]
-					if len(before) > 0 {
-						dst.Write(concatBytes(line, bprefix, before, bn))
-					}
+					// 의도된 '\n\n' 도 치환되버릴수 있음
+					// if len(before) > 0 {
+					dst.Write(concatBytes(line, bprefix, before, bn))
+					// }
 					sBytes, i = after, 0
 				}
 			}

@@ -18,7 +18,8 @@ func parseReplaceSplit(dst io.Writer, src io.Reader, prefix string) {
 		if n > 0 {
 			chunk := buf[:n]
 			chunk = bytes.ReplaceAll(chunk, br, bn)
-			chunk = bytes.ReplaceAll(chunk, bnn, bn)
+			// 의도된 '\n\n' 도 치환되버릴수 있음
+			// chunk = bytes.ReplaceAll(chunk, bnn, bn)
 			stream.Write(chunk)
 
 			// 예를 들어 "12\n34\n5" 중 "12", "34"는 각각의 라인으로 잘라서 전송하고
