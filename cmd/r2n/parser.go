@@ -21,15 +21,16 @@ func parseCuts(dst io.Writer, src io.Reader, prefix string) {
 
 			// 예를 들어 "12\n34\n5" 중 "12", "34"는 각각의 라인으로 잘라서 전송하고
 			sBytes := stream.Bytes()
+			sLen := len(sBytes)
 			for {
-				// '\r' 로 먼저 Cut 해보고
-				before, after, found := bytes.Cut(sBytes, br)
-				if !found {
-					// 못찾았으면 '\n' 로 다시 Cut
-					before, after, found = bytes.Cut(sBytes, bn)
-				}
-				if !found {
+				beforeR, afterR, foundR := bytes.Cut(sBytes, br)
+				beforeN, afterN, foundN := bytes.Cut(sBytes, bn)
+				if !foundR && !foundN {
 					break
+				}
+				before, after := beforeR, afterR
+				if !foundR || (foundN && len(beforeN) < len(beforeR)) {
+					before, after = beforeN, afterN
 				}
 				if len(before) > 0 {
 					dst.Write(concatBytes(line, bprefix, before, bn))
@@ -38,8 +39,10 @@ func parseCuts(dst io.Writer, src io.Reader, prefix string) {
 			}
 
 			// 마지막 5는 아직 라인이 미완성이므로 버퍼에 남겨둠
-			stream.Reset()
-			stream.Write(sBytes)
+			if sLen != len(sBytes) {
+				stream.Reset()
+				stream.Write(sBytes)
+			}
 
 			// chunk가 '\r' or '\n' 없이 계속 들어올때 out 무한 증가하지 않게 강제로 라인 Write
 			if stream.Len() > maxLineLength {

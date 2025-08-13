@@ -20,7 +20,9 @@ tasks:
       - |
         go test ./cmd/r2n -run=^$ -bench=. -benchmem -cpuprofile=cpu.prof -memprofile=mem.prof |
           rg 'Benchmark|allocs' |
-          rg '\[prefix\].*' -r '' --passthru
+          rg '\[prefix\].*' -r '' --passthru |
+          rg '\n^([ 0-9].*)' -r '$1' -U --passthru |
+          sort
 
   test:
     deps: [test:r2n]
@@ -29,7 +31,8 @@ tasks:
     deps: [build]
     vars:
       R2N: bin/r2n-{{.OS}}-{{ARCH}}
-      CMD: bash -c "echo -e '1\r2\r3' | pv -L 2 1>&2"
+      CMD: bash -c "echo -e '\r1\r2\n3\n4\r5\r\n6\n\r7\r\r8\n\n9\n'"
+      # CMD: bash -c "echo -e '1\r2\r3' | pv -L 2 1>&2"
     cmds:
       - defer: rm -f 1.txt
       - '{{.CMD}}'
