@@ -8,27 +8,29 @@ import (
 )
 
 // Benchmark 결과:
-//   bytes.Cuts가 가장 빠르고 가벼우며, bytes.Replace 사용시에는 메모리가 급증한다.
-//   bytes.IndexAny + 커스텀 로직 조합보다 그냥 최적화된 표준 라이브러리 쓰는게 낫다.
+//   최대한 표준 라이브러리를 쓰자. bytes.Cuts() 성능이 평균적으로 가장 좋다.
 //   slice 재할당은 성능과 메모리에 치명적이다.
-// BenchmarkLongLinesParseCuts-16            1000000000       0.2237 ns/op            0 B/op        0 allocs/op
-// BenchmarkLongLinesParseReplaceCut-16      1000000000       0.3742 ns/op            2 B/op        0 allocs/op
-// BenchmarkLongLinesParseReplaceSplit-16    1000000000       0.4269 ns/op            2 B/op        0 allocs/op
-// BenchmarkLongLinesParseScanner-16         1000000000       0.9365 ns/op            0 B/op        0 allocs/op
-// BenchmarkLongLinesParseIndexAny-16                 1   1073671583 ns/op        43120 B/op        7 allocs/op
-// BenchmarkLongLinesParseReplaceSlice-16             1   1768642208 ns/op   3364902960 B/op   344168 allocs/op
-// BenchmarkMixedLinesParseCuts-16           1000000000      0.06453 ns/op            0 B/op        0 allocs/op
-// BenchmarkMixedLinesParseIndexAny-16       1000000000       0.1242 ns/op            0 B/op        0 allocs/op
-// BenchmarkMixedLinesParseReplaceSlice-16   1000000000       0.1282 ns/op            0 B/op        0 allocs/op
-// BenchmarkMixedLinesParseReplaceSplit-16   1000000000       0.1371 ns/op            0 B/op        0 allocs/op
-// BenchmarkMixedLinesParseReplaceCut-16     1000000000       0.1421 ns/op            0 B/op        0 allocs/op
-// BenchmarkMixedLinesParseScanner-16        1000000000       0.6581 ns/op            0 B/op        0 allocs/op
-// BenchmarkShortLinesParseCuts-16           1000000000      0.06683 ns/op            0 B/op        0 allocs/op
-// BenchmarkShortLinesParseIndexAny-16       1000000000      0.06889 ns/op            0 B/op        0 allocs/op
-// BenchmarkShortLinesParseReplaceCut-16     1000000000      0.06972 ns/op            0 B/op        0 allocs/op
-// BenchmarkShortLinesParseReplaceSplit-16   1000000000      0.06966 ns/op            0 B/op        0 allocs/op
-// BenchmarkShortLinesParseReplaceSlice-16   1000000000      0.07796 ns/op            0 B/op        0 allocs/op
-// BenchmarkShortLinesParseScanner-16        1000000000       0.1896 ns/op            0 B/op        0 allocs/op
+//
+// BenchmarkLongLinesParseCuts-16           1000000000    0.2180 ns/op   0 B/op   0 allocs/op
+// BenchmarkLongLinesParseReplaceCut-16     1000000000    0.3692 ns/op   2 B/op   0 allocs/op
+// BenchmarkLongLinesParseReplaceSplit-16   1000000000    0.4244 ns/op   2 B/op   0 allocs/op
+// BenchmarkLongLinesParseIndexAny-16       1000000000    0.5914 ns/op   0 B/op   0 allocs/op
+// BenchmarkLongLinesParseSlice-16          1000000000    0.8247 ns/op   0 B/op   0 allocs/op
+// BenchmarkLongLinesParseScanner-16        1000000000    0.9255 ns/op   0 B/op   0 allocs/op
+//
+// BenchmarkMixedLinesParseSlice-16         1000000000    0.1205 ns/op   0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseIndexAny-16      1000000000    0.1251 ns/op   0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseCuts-16          1000000000    0.1284 ns/op   0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseReplaceCut-16    1000000000    0.1303 ns/op   0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseReplaceSplit-16  1000000000    0.1310 ns/op   0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseScanner-16       1000000000    0.5926 ns/op   0 B/op   0 allocs/op
+//
+// BenchmarkShortLinesParseIndexAny-16      1000000000   0.06491 ns/op   0 B/op   0 allocs/op
+// BenchmarkShortLinesParseReplaceCut-16    1000000000   0.06518 ns/op   0 B/op   0 allocs/op
+// BenchmarkShortLinesParseCuts-16          1000000000   0.06749 ns/op   0 B/op   0 allocs/op
+// BenchmarkShortLinesParseSlice-16         1000000000   0.07001 ns/op   0 B/op   0 allocs/op
+// BenchmarkShortLinesParseReplaceSplit-16  1000000000   0.07158 ns/op   0 B/op   0 allocs/op
+// BenchmarkShortLinesParseScanner-16       1000000000   0.18980 ns/op   0 B/op   0 allocs/op
 
 var (
 	count  = 100000
@@ -90,16 +92,16 @@ func BenchmarkMixedLinesParseReplaceCut(b *testing.B) {
 	parseReplaceCut(dst, mixedLines(), prefix)
 }
 
-func BenchmarkShortLinesParseReplaceSlice(b *testing.B) {
-	parseReplaceSlice(dst, shortLines(), prefix)
+func BenchmarkShortLinesParseSlice(b *testing.B) {
+	parseSlice(dst, shortLines(), prefix)
 }
 
-func BenchmarkLongLinesParseReplaceSlice(b *testing.B) {
-	parseReplaceSlice(dst, longLines(), prefix)
+func BenchmarkLongLinesParseSlice(b *testing.B) {
+	parseSlice(dst, longLines(), prefix)
 }
 
-func BenchmarkMixedLinesParseReplaceSlice(b *testing.B) {
-	parseReplaceSlice(dst, mixedLines(), prefix)
+func BenchmarkMixedLinesParseSlice(b *testing.B) {
+	parseSlice(dst, mixedLines(), prefix)
 }
 
 func BenchmarkShortLinesParseReplaceSplit(b *testing.B) {

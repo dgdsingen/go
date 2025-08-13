@@ -1,5 +1,5 @@
-// bytes.IndexAny() 버전
-// bytes.Cut() 2회 반복에 비해 1번만 반복하고 index로 연산하기에 더 빠를 줄 알았으나 성능과 메모리 면에서 모두 밀림
+// slice 버전
+// slice 재할당이 너무 많이 일어나서 성능과 메모리 효율성 낮음
 package main
 
 import (
@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-func parseIndexAny(dst io.Writer, src io.Reader, prefix string) {
+func parseSlice(dst io.Writer, src io.Reader, prefix string) {
 	buf := make([]byte, 4096)
 	stream := new(bytes.Buffer)
 	line := new(bytes.Buffer)
@@ -18,11 +18,12 @@ func parseIndexAny(dst io.Writer, src io.Reader, prefix string) {
 		if n > 0 {
 			chunk := buf[:n]
 			// 예를 들어 "12\n34\n5" 중 "12", "34"는 각각의 라인으로 잘라서 전송하고
-			for {
-				// IndexAny를 IndexByte로 바꾸면 성능이 좋아지지만 그럴거면 그냥 Cut 써도됨
-				if found := bytes.IndexAny(chunk, "\r\n"); found != -1 {
-					before := chunk[:found]
-					chunk = chunk[found+1:]
+			for i := 0; i < len(chunk); i++ {
+				// '\r', '\n' 둘 다 검색
+				if chunk[i] == '\r' || chunk[i] == '\n' {
+					before := chunk[:i]
+					chunk = chunk[i+1:]
+					i = 0
 					// '\r', '\n' 가 문자열 가장 앞에 있었다면 skip
 					if len(before) <= 0 {
 						continue
@@ -34,8 +35,6 @@ func parseIndexAny(dst io.Writer, src io.Reader, prefix string) {
 						stream.Reset()
 					}
 					dst.Write(concatBytes(line, bprefix, before, bn))
-				} else {
-					break
 				}
 			}
 

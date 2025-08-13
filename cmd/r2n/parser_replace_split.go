@@ -27,12 +27,12 @@ func parseReplaceSplit(dst io.Writer, src io.Reader, prefix string) {
 				dst.Write(concatBytes(line, bprefix, s, bn))
 			}
 
-			// 마지막 5는 아직 라인이 미완성이므로 버퍼에 남겨둠
+			// 마지막 "5"는 아직 라인이 미완성이므로 버퍼에 남겨둠
 			last := split[len(split)-1]
 			stream.Reset()
 			stream.Write(last)
 
-			// chunk가 '\n' 없이 계속 들어올때 out 무한 증가를 막기 위해 강제 라인처리 + flush
+			// chunk가 '\r' or '\n' 없이 계속 들어올때 out 무한 증가하지 않게 강제로 라인 Write
 			if stream.Len() > maxLineLength {
 				dst.Write(concatBytes(line, bprefix, stream.Bytes(), bn))
 				stream.Reset()
@@ -40,7 +40,7 @@ func parseReplaceSplit(dst io.Writer, src io.Reader, prefix string) {
 		}
 
 		if err != nil {
-			// '\n' 없이 끝난 경우 강제로 라인 처리해서 내보냄
+			// '\n' 없이 끝난 경우 강제로 라인 Write
 			if stream.Len() > 0 {
 				dst.Write(concatBytes(line, bprefix, stream.Bytes(), bn))
 			}
