@@ -16,31 +16,29 @@ func parseIndexAny(dst io.Writer, src io.Reader, prefix string) {
 	for {
 		n, err := src.Read(buf)
 		if n > 0 {
-			chunk := buf[:n]
+			stream.Write(buf[:n])
+			sBytes := stream.Bytes()
+			sLen := len(sBytes)
+
 			// 예를 들어 "12\n34\n5" 중 "12", "34"는 각각의 라인으로 잘라서 전송하고
 			for {
 				// IndexAny를 IndexByte로 바꾸면 성능이 좋아지지만 그럴거면 그냥 Cut 써도됨
-				if found := bytes.IndexAny(chunk, "\r\n"); found != -1 {
-					before := chunk[:found]
-					chunk = chunk[found+1:]
-					// '\r', '\n' 가 문자열 가장 앞에 있었다면 skip
-					if len(before) <= 0 {
-						continue
+				if found := bytes.IndexAny(sBytes, "\r\n"); found != -1 {
+					before, after := sBytes[:found], sBytes[found+1:]
+					if len(before) > 0 {
+						dst.Write(concatBytes(line, bprefix, before, bn))
 					}
-					// stream에 미완성 라인 잔여물이 남아있다면 함께 전송
-					if stream.Len() > 0 {
-						stream.Write(before)
-						before = stream.Bytes()
-						stream.Reset()
-					}
-					dst.Write(concatBytes(line, bprefix, before, bn))
+					sBytes = after
 				} else {
 					break
 				}
 			}
 
 			// 마지막 "5"는 아직 라인이 미완성이므로 버퍼에 남겨둠
-			stream.Write(chunk)
+			if sLen != len(sBytes) {
+				stream.Reset()
+				stream.Write(sBytes)
+			}
 
 			// chunk가 '\r' or '\n' 없이 계속 들어올때 out 무한 증가하지 않게 강제로 라인 Write
 			if stream.Len() > maxLineLength {
