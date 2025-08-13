@@ -32,7 +32,7 @@ func parseCuts(dst io.Writer, src io.Reader, prefix string) {
 				if !foundR || (foundN && len(beforeN) < len(beforeR)) {
 					before, after = beforeN, afterN
 				}
-				// 의도된 '\n\n' 도 치환되버릴수 있음
+				// TODO: 의도된 '\n\n' 도 치환되버릴수 있고, 반대로 불필요한 '\n' 가 출력될수도 있고.
 				// if len(before) > 0 {
 				dst.Write(concatBytes(line, bprefix, before, bn))
 				// }
