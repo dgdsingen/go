@@ -19,7 +19,6 @@ func parseCuts(dst io.Writer, src io.Reader, prefix string) {
 		if n > 0 {
 			stream.Write(buf[:n])
 			sBytes := stream.Bytes()
-			sLen := len(sBytes)
 
 			// 예를 들어 "12\n34\n5" 중 "12", "34"는 각각의 라인으로 잘라서 전송하고
 			for {
@@ -40,7 +39,7 @@ func parseCuts(dst io.Writer, src io.Reader, prefix string) {
 			}
 
 			// 마지막 "5"는 아직 라인이 미완성이므로 버퍼에 남겨둠
-			if sLen != len(sBytes) {
+			if stream.Len() != len(sBytes) {
 				stream.Reset()
 				stream.Write(sBytes)
 			}
