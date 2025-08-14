@@ -1,6 +1,5 @@
-// parser.go = 현재 사용되는 parser
-// bytes.Cut()만 n회 호출하는 버전
-// bytes.IndexByte() 버전 다음으로 뛰어남.
+// bytes.IndexByte() 버전
+// bytes.Cut() 버전보다 효율적임
 package main
 
 import (
@@ -8,7 +7,7 @@ import (
 	"io"
 )
 
-func parseCuts(dst io.Writer, src io.Reader, prefix string) {
+func parseIndexByte(dst io.Writer, src io.Reader, prefix string) {
 	buf := make([]byte, 4096)
 	stream := new(bytes.Buffer)
 	line := new(bytes.Buffer)
@@ -23,15 +22,16 @@ func parseCuts(dst io.Writer, src io.Reader, prefix string) {
 			// 예를 들어 "12\n34\n5" 중 "12", "34"는 각각의 라인으로 잘라서 전송하고
 			for {
 				// '\r', '\n' 둘 다 검색
-				beforeR, afterR, foundR := bytes.Cut(sBytes, bsr)
-				beforeN, afterN, foundN := bytes.Cut(sBytes, bsn)
-				if !foundR && !foundN {
+				foundR := bytes.IndexByte(sBytes, br)
+				foundN := bytes.IndexByte(sBytes, bn)
+				if foundR == -1 && foundN == -1 {
 					break
 				}
-				before, after := beforeR, afterR
-				if !foundR || (foundN && len(beforeN) < len(beforeR)) {
-					before, after = beforeN, afterN
+				found := foundR
+				if foundR == -1 || (foundN > -1 && foundN < foundR) {
+					found = foundN
 				}
+				before, after := sBytes[:found], sBytes[found+1:]
 				// TODO: if len(before) > 0 추가시 의도된 '\n\n'도 치환되버림. if를 빼면 불필요한 '\n'가 출력될수도 있음.
 				// '\r', '\n' 둘 다 찾았을때 before 길이 차이가 1인 경우 1개는 skip 처리한다면?
 				if len(before) > 0 {

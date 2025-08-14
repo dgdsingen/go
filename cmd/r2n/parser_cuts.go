@@ -1,5 +1,6 @@
-// bytes.IndexByte() 버전
-// bytes.Cut() 버전보다 효율적임
+// parser.go = 현재 사용되는 parser
+// bytes.Cut()만 n회 호출하는 버전
+// bytes.IndexByte() 버전 다음으로 뛰어남.
 package main
 
 import (
@@ -7,7 +8,7 @@ import (
 	"io"
 )
 
-func parseIndexByte(dst io.Writer, src io.Reader, prefix string) {
+func parseCuts(dst io.Writer, src io.Reader, prefix string) {
 	buf := make([]byte, 4096)
 	stream := new(bytes.Buffer)
 	line := new(bytes.Buffer)
@@ -22,16 +23,15 @@ func parseIndexByte(dst io.Writer, src io.Reader, prefix string) {
 			// 예를 들어 "12\n34\n5" 중 "12", "34"는 각각의 라인으로 잘라서 전송하고
 			for {
 				// '\r', '\n' 둘 다 검색
-				foundR := bytes.IndexByte(sBytes, br)
-				foundN := bytes.IndexByte(sBytes, bn)
-				if foundR == -1 && foundN == -1 {
+				beforeR, afterR, foundR := bytes.Cut(sBytes, bsr)
+				beforeN, afterN, foundN := bytes.Cut(sBytes, bsn)
+				if !foundR && !foundN {
 					break
 				}
-				found := foundR
-				if foundR == -1 || (foundN > -1 && foundN < foundR) {
-					found = foundN
+				before, after := beforeR, afterR
+				if !foundR || (foundN && len(beforeN) < len(beforeR)) {
+					before, after = beforeN, afterN
 				}
-				before, after := sBytes[:found], sBytes[found+1:]
 				if len(before) > 0 {
 					dst.Write(concatBytes(line, bprefix, before, bsn))
 				}

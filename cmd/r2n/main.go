@@ -53,19 +53,19 @@ func main() {
 
 	switch *stdio {
 	case "all":
-		go parseCuts(os.Stdout, stdout, *prefix)
-		go parseCuts(os.Stderr, stderr, *prefix)
+		go parseIndexByte(os.Stdout, stdout, *prefix)
+		go parseIndexByte(os.Stderr, stderr, *prefix)
 	case "stdout":
-		go parseCuts(os.Stdout, stdout, *prefix)
+		go parseIndexByte(os.Stdout, stdout, *prefix)
 		go io.Copy(os.Stderr, stderr)
 	case "stderr":
 		go io.Copy(os.Stdout, stdout)
-		go parseCuts(os.Stderr, stderr, *prefix)
+		go parseIndexByte(os.Stderr, stderr, *prefix)
 	default:
 		// stdout은 변환 없이 그대로 전달 (pipe 전달시 데이터 내용이 바뀌면 안됨)
 		go io.Copy(os.Stdout, stdout)
 		// stderr는 변환 후 전달 (curl의 progress bar 출력용)
-		go parseCuts(os.Stderr, stderr, *prefix)
+		go parseIndexByte(os.Stderr, stderr, *prefix)
 	}
 
 	if err := subCmd.Wait(); err != nil {
