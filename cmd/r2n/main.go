@@ -60,22 +60,23 @@ func main() {
 			f()
 		}()
 	}
+	parser := new(IndexByteParser)
 
 	switch *stdio {
 	case "all":
-		run(func() { parseIndexByte(os.Stdout, stdout, *prefix) })
-		run(func() { parseIndexByte(os.Stderr, stderr, *prefix) })
+		run(func() { parse(os.Stdout, stdout, parser, *prefix) })
+		run(func() { parse(os.Stderr, stderr, parser, *prefix) })
 	case "stdout":
-		run(func() { parseIndexByte(os.Stdout, stdout, *prefix) })
+		run(func() { parse(os.Stdout, stdout, parser, *prefix) })
 		run(func() { io.Copy(os.Stderr, stderr) })
 	case "stderr":
 		run(func() { io.Copy(os.Stdout, stdout) })
-		run(func() { parseIndexByte(os.Stderr, stderr, *prefix) })
+		run(func() { parse(os.Stderr, stderr, parser, *prefix) })
 	default:
 		// stdout은 변환 없이 그대로 전달 (pipe 전달시 데이터 내용이 바뀌면 안됨)
 		run(func() { io.Copy(os.Stdout, stdout) })
 		// stderr는 변환 후 전달 (curl의 progress bar 출력용)
-		run(func() { parseIndexByte(os.Stderr, stderr, *prefix) })
+		run(func() { parse(os.Stderr, stderr, parser, *prefix) })
 	}
 
 	wg.Wait()

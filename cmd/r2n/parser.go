@@ -1,6 +1,3 @@
-// Current Parser
-// bytes.IndexByte() 버전
-// bytes.Cut() 버전보다 효율적임
 package main
 
 import (
@@ -8,7 +5,87 @@ import (
 	"io"
 )
 
-func parseIndexByte(dst io.Writer, src io.Reader, prefix string) {
+type Parser interface {
+	Prep(bs []byte) []byte
+	Parse(bs []byte) (before, after []byte, found bool)
+}
+
+type IndexByteParser struct{}
+
+func (p *IndexByteParser) Prep(bs []byte) []byte {
+	return bs
+}
+func (p *IndexByteParser) Parse(bs []byte) (before, after []byte, found bool) {
+	// '\r', '\n' 둘 다 검색
+	indexR := bytes.IndexByte(bs, br)
+	indexN := bytes.IndexByte(bs, bn)
+	if indexR == -1 && indexN == -1 {
+		return before, after, false
+	}
+	index := indexR
+	if indexR == -1 || (indexN > -1 && indexN < indexR) {
+		index = indexN
+	}
+	return bs[:index], bs[index+1:], true
+}
+
+type CutsParser struct{}
+
+func (p *CutsParser) Prep(bs []byte) []byte {
+	return bs
+}
+func (p *CutsParser) Parse(bs []byte) (before, after []byte, found bool) {
+	beforeR, afterR, foundR := bytes.Cut(bs, bsr)
+	beforeN, afterN, foundN := bytes.Cut(bs, bsn)
+	if !foundR && !foundN {
+		return before, after, false
+	}
+	before, after = beforeR, afterR
+	if !foundR || (foundN && len(beforeN) < len(beforeR)) {
+		before, after = beforeN, afterN
+	}
+	return before, after, true
+}
+
+type SliceParser struct{}
+
+func (p *SliceParser) Prep(bs []byte) []byte {
+	return bs
+}
+func (p *SliceParser) Parse(bs []byte) (before, after []byte, found bool) {
+	for i := 0; i < len(bs); i++ {
+		if bs[i] == '\r' || bs[i] == '\n' {
+			return bs[:i], bs[i+1:], true
+		}
+	}
+	return before, after, false
+}
+
+type IndexAnyParser struct{}
+
+func (p *IndexAnyParser) Prep(bs []byte) []byte {
+	return bs
+}
+func (p *IndexAnyParser) Parse(bs []byte) (before, after []byte, found bool) {
+	index := bytes.IndexAny(bs, "\r\n")
+	if index == -1 {
+		return before, after, false
+	}
+	return bs[:index], bs[index+1:], true
+}
+
+type ReplaceCutParser struct{}
+
+func (p *ReplaceCutParser) Prep(bs []byte) []byte {
+	return bytes.ReplaceAll(bs, bsr, bsn)
+	// 의도된 '\n\n' 도 치환되버릴수 있음
+	// bs = bytes.ReplaceAll(chunk, bnn, bn)
+}
+func (p *ReplaceCutParser) Parse(bs []byte) (before, after []byte, found bool) {
+	return bytes.Cut(bs, bsn)
+}
+
+func parse(dst io.Writer, src io.Reader, p Parser, prefix string) {
 	buf := make([]byte, 4096)
 	stream := new(bytes.Buffer)
 	line := new(bytes.Buffer)
@@ -17,22 +94,16 @@ func parseIndexByte(dst io.Writer, src io.Reader, prefix string) {
 	for {
 		n, err := src.Read(buf)
 		if n > 0 {
-			stream.Write(buf[:n])
+			chunk := p.Prep(buf[:n])
+			stream.Write(chunk)
 			sBytes := stream.Bytes()
 
 			// 예를 들어 "12\n34\n5" 중 "12", "34"는 각각의 라인으로 잘라서 전송하고
 			for {
-				// '\r', '\n' 둘 다 검색
-				foundR := bytes.IndexByte(sBytes, br)
-				foundN := bytes.IndexByte(sBytes, bn)
-				if foundR == -1 && foundN == -1 {
+				before, after, found := p.Parse(sBytes)
+				if !found {
 					break
 				}
-				found := foundR
-				if foundR == -1 || (foundN > -1 && foundN < foundR) {
-					found = foundN
-				}
-				before, after := sBytes[:found], sBytes[found+1:]
 				// // 추가시 의도된 '\n\n'도 치환되버림
 				// if len(before) > 0 {
 				// 	dst.Write(concatBytes(line, bprefix, before, bsn))
