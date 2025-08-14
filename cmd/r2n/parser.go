@@ -85,6 +85,28 @@ func (p *ReplaceCutParser) Parse(bs []byte) (before, after []byte, found bool) {
 	return bytes.Cut(bs, bsn)
 }
 
+type ReplaceSplitParser struct {
+	split [][]byte
+	index int
+}
+
+func (p *ReplaceSplitParser) Prep(bs []byte) []byte {
+	return bytes.ReplaceAll(bs, bsr, bsn)
+}
+func (p *ReplaceSplitParser) Parse(bs []byte) (before, after []byte, found bool) {
+	if len(p.split) == 0 {
+		p.split = bytes.Split(bs, bsn)
+	}
+	before, after = p.split[p.index], p.split[len(p.split)-1]
+	p.index++
+	if p.index >= len(p.split) {
+		p.split = [][]byte{}
+		p.index = 0
+		return before, after, false
+	}
+	return before, after, true
+}
+
 func parse(dst io.Writer, src io.Reader, p Parser, prefix string) {
 	buf := make([]byte, 4096)
 	stream := new(bytes.Buffer)
