@@ -1,6 +1,5 @@
 // parser.go = 현재 사용되는 parser
-// bytes.Cut()만 n회 호출하는 버전
-// 성능과 메모리 효율성이 가장 뛰어남
+// bytes.Cut()만 n회 호출하는 버전. bytes.IndexByte() 버전 다음으로 뛰어남.
 package main
 
 import (
