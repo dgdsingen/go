@@ -11,29 +11,29 @@ import (
 //   최대한 표준 라이브러리를 쓰자. bytes.IndexByte(), bytes.Cuts() 성능이 평균적으로 가장 좋다.
 //   slice 재할당은 성능과 메모리에 치명적이다.
 //
-// BenchmarkLongLinesParseIndexByte-16       1000000000       0.2028 ns/op       0 B/op   0 allocs/op
-// BenchmarkLongLinesParseCuts-16            1000000000       0.2075 ns/op       0 B/op   0 allocs/op
-// BenchmarkLongLinesParseReplaceCut-16      1000000000       0.2543 ns/op       1 B/op   0 allocs/op
-// BenchmarkLongLinesParseReplaceSplit-16    1000000000       0.3353 ns/op       1 B/op   0 allocs/op
-// BenchmarkLongLinesParseScanner-16         1000000000       0.9236 ns/op       0 B/op   0 allocs/op
-// BenchmarkLongLinesParseSlice-16                    1   1008076292 ns/op   43120 B/op   7 allocs/op
-// BenchmarkLongLinesParseIndexAny-16                 1   1061428708 ns/op   43120 B/op   7 allocs/op
+// BenchmarkLongLinesParseCuts-16            1000000000       0.1922 ns/op       0 B/op   0 allocs/op
+// BenchmarkLongLinesParseIndexByte-16       1000000000       0.1996 ns/op       0 B/op   0 allocs/op
+// BenchmarkLongLinesParseReplaceCut-16      1000000000       0.2578 ns/op       1 B/op   0 allocs/op
+// BenchmarkLongLinesParseReplaceSplit-16    1000000000       0.3335 ns/op       1 B/op   0 allocs/op
+// BenchmarkLongLinesParseScanner-16         1000000000       0.9200 ns/op       0 B/op   0 allocs/op
+// BenchmarkLongLinesParseIndexAny-16                 1   1051689042 ns/op   43120 B/op   7 allocs/op
+// BenchmarkLongLinesParseSlice-16                    1   1074251042 ns/op   43120 B/op   7 allocs/op
 //
-// BenchmarkMixedLinesParseIndexAny-16       1000000000       0.2272 ns/op       0 B/op   0 allocs/op
-// BenchmarkMixedLinesParseCuts-16           1000000000       0.2292 ns/op       0 B/op   0 allocs/op
-// BenchmarkMixedLinesParseIndexByte-16      1000000000       0.2303 ns/op       0 B/op   0 allocs/op
-// BenchmarkMixedLinesParseSlice-16          1000000000       0.2452 ns/op       0 B/op   0 allocs/op
-// BenchmarkMixedLinesParseReplaceCut-16     1000000000       0.2464 ns/op       0 B/op   0 allocs/op
-// BenchmarkMixedLinesParseReplaceSplit-16   1000000000       0.2500 ns/op       0 B/op   0 allocs/op
-// BenchmarkMixedLinesParseScanner-16        1000000000       0.5518 ns/op       0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseIndexAny-16       1000000000       0.2303 ns/op       0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseSlice-16          1000000000       0.2316 ns/op       0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseReplaceCut-16     1000000000       0.2321 ns/op       0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseIndexByte-16      1000000000       0.2338 ns/op       0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseReplaceSplit-16   1000000000       0.2358 ns/op       0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseCuts-16           1000000000       0.2480 ns/op       0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseScanner-16        1000000000       0.5455 ns/op       0 B/op   0 allocs/op
 //
-// BenchmarkShortLinesParseIndexByte-16      1000000000      0.05434 ns/op       0 B/op   0 allocs/op
-// BenchmarkShortLinesParseCuts-16           1000000000      0.05569 ns/op       0 B/op   0 allocs/op
-// BenchmarkShortLinesParseSlice-16          1000000000      0.05811 ns/op       0 B/op   0 allocs/op
-// BenchmarkShortLinesParseReplaceCut-16     1000000000      0.06304 ns/op       0 B/op   0 allocs/op
-// BenchmarkShortLinesParseIndexAny-16       1000000000      0.06542 ns/op       0 B/op   0 allocs/op
-// BenchmarkShortLinesParseReplaceSplit-16   1000000000      0.07278 ns/op       0 B/op   0 allocs/op
-// BenchmarkShortLinesParseScanner-16        1000000000      0.18020 ns/op       0 B/op   0 allocs/op
+// BenchmarkShortLinesParseIndexByte-16      1000000000      0.05764 ns/op       0 B/op   0 allocs/op
+// BenchmarkShortLinesParseReplaceCut-16     1000000000      0.05930 ns/op       0 B/op   0 allocs/op
+// BenchmarkShortLinesParseReplaceSplit-16   1000000000      0.06039 ns/op       0 B/op   0 allocs/op
+// BenchmarkShortLinesParseIndexAny-16       1000000000      0.06096 ns/op       0 B/op   0 allocs/op
+// BenchmarkShortLinesParseSlice-16          1000000000      0.06107 ns/op       0 B/op   0 allocs/op
+// BenchmarkShortLinesParseCuts-16           1000000000      0.06369 ns/op       0 B/op   0 allocs/op
+// BenchmarkShortLinesParseScanner-16        1000000000      0.18410 ns/op       0 B/op   0 allocs/op
 
 var (
 	count = 100000
@@ -41,12 +41,6 @@ var (
 	// dst = io.Discard
 	dst    = os.Stdout
 	prefix = "[prefix] "
-
-	indexByteParser  = new(IndexByteParser)
-	indexAnyParser   = new(IndexAnyParser)
-	cutsParser       = new(CutsParser)
-	sliceParser      = new(SliceParser)
-	replaceCutParser = new(ReplaceCutParser)
 
 	shortLineBytes = bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 100), bsn[0]), count)
 	longLineBytes  = bytes.Repeat(append(bytes.Repeat([]byte{'X'}, 10000), bsn[0]), count)
@@ -66,75 +60,75 @@ func mixedLines() io.Reader {
 }
 
 func BenchmarkShortLinesParseCuts(b *testing.B) {
-	parse(dst, shortLines(), cutsParser, prefix)
+	parse(dst, shortLines(), new(CutsParser), prefix)
 }
 
 func BenchmarkLongLinesParseCuts(b *testing.B) {
-	parse(dst, longLines(), cutsParser, prefix)
+	parse(dst, longLines(), new(CutsParser), prefix)
 }
 
 func BenchmarkMixedLinesParseCuts(b *testing.B) {
-	parse(dst, mixedLines(), cutsParser, prefix)
+	parse(dst, mixedLines(), new(CutsParser), prefix)
 }
 
 func BenchmarkShortLinesParseIndexByte(b *testing.B) {
-	parse(dst, shortLines(), indexByteParser, prefix)
+	parse(dst, shortLines(), new(IndexByteParser), prefix)
 }
 
 func BenchmarkLongLinesParseIndexByte(b *testing.B) {
-	parse(dst, longLines(), indexByteParser, prefix)
+	parse(dst, longLines(), new(IndexByteParser), prefix)
 }
 
 func BenchmarkMixedLinesParseIndexByte(b *testing.B) {
-	parse(dst, mixedLines(), indexByteParser, prefix)
+	parse(dst, mixedLines(), new(IndexByteParser), prefix)
 }
 
 func BenchmarkShortLinesParseIndexAny(b *testing.B) {
-	parse(dst, shortLines(), indexAnyParser, prefix)
+	parse(dst, shortLines(), new(IndexAnyParser), prefix)
 }
 
 func BenchmarkLongLinesParseIndexAny(b *testing.B) {
-	parse(dst, longLines(), indexAnyParser, prefix)
+	parse(dst, longLines(), new(IndexAnyParser), prefix)
 }
 
 func BenchmarkMixedLinesParseIndexAny(b *testing.B) {
-	parse(dst, mixedLines(), indexAnyParser, prefix)
+	parse(dst, mixedLines(), new(IndexAnyParser), prefix)
 }
 
 func BenchmarkShortLinesParseSlice(b *testing.B) {
-	parse(dst, shortLines(), sliceParser, prefix)
+	parse(dst, shortLines(), new(SliceParser), prefix)
 }
 
 func BenchmarkLongLinesParseSlice(b *testing.B) {
-	parse(dst, longLines(), sliceParser, prefix)
+	parse(dst, longLines(), new(SliceParser), prefix)
 }
 
 func BenchmarkMixedLinesParseSlice(b *testing.B) {
-	parse(dst, mixedLines(), sliceParser, prefix)
+	parse(dst, mixedLines(), new(SliceParser), prefix)
 }
 
 func BenchmarkShortLinesParseReplaceCut(b *testing.B) {
-	parse(dst, shortLines(), replaceCutParser, prefix)
+	parse(dst, shortLines(), new(ReplaceCutParser), prefix)
 }
 
 func BenchmarkLongLinesParseReplaceCut(b *testing.B) {
-	parse(dst, longLines(), replaceCutParser, prefix)
+	parse(dst, longLines(), new(ReplaceCutParser), prefix)
 }
 
 func BenchmarkMixedLinesParseReplaceCut(b *testing.B) {
-	parse(dst, mixedLines(), replaceCutParser, prefix)
+	parse(dst, mixedLines(), new(ReplaceCutParser), prefix)
 }
 
 func BenchmarkShortLinesParseReplaceSplit(b *testing.B) {
-	parseReplaceSplit(dst, shortLines(), prefix)
+	parse(dst, shortLines(), new(ReplaceSplitParser), prefix)
 }
 
 func BenchmarkLongLinesParseReplaceSplit(b *testing.B) {
-	parseReplaceSplit(dst, longLines(), prefix)
+	parse(dst, longLines(), new(ReplaceSplitParser), prefix)
 }
 
 func BenchmarkMixedLinesParseReplaceSplit(b *testing.B) {
-	parseReplaceSplit(dst, mixedLines(), prefix)
+	parse(dst, mixedLines(), new(ReplaceSplitParser), prefix)
 }
 
 func BenchmarkShortLinesParseScanner(b *testing.B) {
@@ -159,5 +153,5 @@ func TestLongLine(t *testing.T) {
 	data := bytes.Repeat([]byte{'X'}, 100000) // 100KB without '\r' or '\n'
 	src := bytes.NewReader([]byte(data))
 	prefix := "[prefix] "
-	parse(os.Stdout, src, indexByteParser, prefix)
+	parse(os.Stdout, src, new(IndexByteParser), prefix)
 }
