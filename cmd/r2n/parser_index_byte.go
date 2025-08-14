@@ -1,4 +1,5 @@
 // bytes.IndexByte() 버전
+// bytes.Cut() 버전보다 효율적임
 package main
 
 import (
