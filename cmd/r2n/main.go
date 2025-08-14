@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 )
 
 func main() {
@@ -51,22 +52,33 @@ func main() {
 		panic(err)
 	}
 
+	wg := new(sync.WaitGroup)
+	run := func(f func()) {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			f()
+		}()
+	}
+
 	switch *stdio {
 	case "all":
-		go parseIndexByte(os.Stdout, stdout, *prefix)
-		go parseIndexByte(os.Stderr, stderr, *prefix)
+		run(func() { parseIndexByte(os.Stdout, stdout, *prefix) })
+		run(func() { parseIndexByte(os.Stderr, stderr, *prefix) })
 	case "stdout":
-		go parseIndexByte(os.Stdout, stdout, *prefix)
-		go io.Copy(os.Stderr, stderr)
+		run(func() { parseIndexByte(os.Stdout, stdout, *prefix) })
+		run(func() { io.Copy(os.Stderr, stderr) })
 	case "stderr":
-		go io.Copy(os.Stdout, stdout)
-		go parseIndexByte(os.Stderr, stderr, *prefix)
+		run(func() { io.Copy(os.Stdout, stdout) })
+		run(func() { parseIndexByte(os.Stderr, stderr, *prefix) })
 	default:
 		// stdout은 변환 없이 그대로 전달 (pipe 전달시 데이터 내용이 바뀌면 안됨)
-		go io.Copy(os.Stdout, stdout)
+		run(func() { io.Copy(os.Stdout, stdout) })
 		// stderr는 변환 후 전달 (curl의 progress bar 출력용)
-		go parseIndexByte(os.Stderr, stderr, *prefix)
+		run(func() { parseIndexByte(os.Stderr, stderr, *prefix) })
 	}
+
+	wg.Wait()
 
 	if err := subCmd.Wait(); err != nil {
 		os.Exit(subCmd.ProcessState.ExitCode())
