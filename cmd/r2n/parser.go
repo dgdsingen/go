@@ -114,8 +114,8 @@ func (p *ReplaceSplitParser) Parse(bs []byte) (before, after []byte, found bool)
 
 func parse(dst io.Writer, src io.Reader, p Parser, prefix string) {
 	buf := make([]byte, 4096)
-	stream := new(bytes.Buffer)
-	line := new(bytes.Buffer)
+	stream := &bytes.Buffer{}
+	line := &bytes.Buffer{}
 	bprefix := []byte(prefix)
 
 	for {

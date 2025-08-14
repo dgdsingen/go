@@ -37,7 +37,7 @@ import (
 
 var (
 	count = 100000
-	// dst = new(bytes.Buffer)
+	// dst = &bytes.Buffer{}
 	// dst = io.Discard
 	dst    = os.Stdout
 	prefix = "[prefix] "
@@ -60,75 +60,75 @@ func mixedLines() io.Reader {
 }
 
 func BenchmarkShortLinesParseCuts(b *testing.B) {
-	parse(dst, shortLines(), new(CutsParser), prefix)
+	parse(dst, shortLines(), &CutsParser{}, prefix)
 }
 
 func BenchmarkLongLinesParseCuts(b *testing.B) {
-	parse(dst, longLines(), new(CutsParser), prefix)
+	parse(dst, longLines(), &CutsParser{}, prefix)
 }
 
 func BenchmarkMixedLinesParseCuts(b *testing.B) {
-	parse(dst, mixedLines(), new(CutsParser), prefix)
+	parse(dst, mixedLines(), &CutsParser{}, prefix)
 }
 
 func BenchmarkShortLinesParseIndexByte(b *testing.B) {
-	parse(dst, shortLines(), new(IndexByteParser), prefix)
+	parse(dst, shortLines(), &IndexByteParser{}, prefix)
 }
 
 func BenchmarkLongLinesParseIndexByte(b *testing.B) {
-	parse(dst, longLines(), new(IndexByteParser), prefix)
+	parse(dst, longLines(), &IndexByteParser{}, prefix)
 }
 
 func BenchmarkMixedLinesParseIndexByte(b *testing.B) {
-	parse(dst, mixedLines(), new(IndexByteParser), prefix)
+	parse(dst, mixedLines(), &IndexByteParser{}, prefix)
 }
 
 func BenchmarkShortLinesParseIndexAny(b *testing.B) {
-	parse(dst, shortLines(), new(IndexAnyParser), prefix)
+	parse(dst, shortLines(), &IndexAnyParser{}, prefix)
 }
 
 func BenchmarkLongLinesParseIndexAny(b *testing.B) {
-	parse(dst, longLines(), new(IndexAnyParser), prefix)
+	parse(dst, longLines(), &IndexAnyParser{}, prefix)
 }
 
 func BenchmarkMixedLinesParseIndexAny(b *testing.B) {
-	parse(dst, mixedLines(), new(IndexAnyParser), prefix)
+	parse(dst, mixedLines(), &IndexAnyParser{}, prefix)
 }
 
 func BenchmarkShortLinesParseSlice(b *testing.B) {
-	parse(dst, shortLines(), new(SliceParser), prefix)
+	parse(dst, shortLines(), &SliceParser{}, prefix)
 }
 
 func BenchmarkLongLinesParseSlice(b *testing.B) {
-	parse(dst, longLines(), new(SliceParser), prefix)
+	parse(dst, longLines(), &SliceParser{}, prefix)
 }
 
 func BenchmarkMixedLinesParseSlice(b *testing.B) {
-	parse(dst, mixedLines(), new(SliceParser), prefix)
+	parse(dst, mixedLines(), &SliceParser{}, prefix)
 }
 
 func BenchmarkShortLinesParseReplaceCut(b *testing.B) {
-	parse(dst, shortLines(), new(ReplaceCutParser), prefix)
+	parse(dst, shortLines(), &ReplaceCutParser{}, prefix)
 }
 
 func BenchmarkLongLinesParseReplaceCut(b *testing.B) {
-	parse(dst, longLines(), new(ReplaceCutParser), prefix)
+	parse(dst, longLines(), &ReplaceCutParser{}, prefix)
 }
 
 func BenchmarkMixedLinesParseReplaceCut(b *testing.B) {
-	parse(dst, mixedLines(), new(ReplaceCutParser), prefix)
+	parse(dst, mixedLines(), &ReplaceCutParser{}, prefix)
 }
 
 func BenchmarkShortLinesParseReplaceSplit(b *testing.B) {
-	parse(dst, shortLines(), new(ReplaceSplitParser), prefix)
+	parse(dst, shortLines(), &ReplaceSplitParser{}, prefix)
 }
 
 func BenchmarkLongLinesParseReplaceSplit(b *testing.B) {
-	parse(dst, longLines(), new(ReplaceSplitParser), prefix)
+	parse(dst, longLines(), &ReplaceSplitParser{}, prefix)
 }
 
 func BenchmarkMixedLinesParseReplaceSplit(b *testing.B) {
-	parse(dst, mixedLines(), new(ReplaceSplitParser), prefix)
+	parse(dst, mixedLines(), &ReplaceSplitParser{}, prefix)
 }
 
 func BenchmarkShortLinesParseScanner(b *testing.B) {
@@ -153,5 +153,5 @@ func TestLongLine(t *testing.T) {
 	data := bytes.Repeat([]byte{'X'}, 100000) // 100KB without '\r' or '\n'
 	src := bytes.NewReader([]byte(data))
 	prefix := "[prefix] "
-	parse(os.Stdout, src, new(IndexByteParser), prefix)
+	parse(os.Stdout, src, &IndexByteParser{}, prefix)
 }
