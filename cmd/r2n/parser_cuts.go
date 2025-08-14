@@ -1,6 +1,5 @@
-// parser.go = 현재 사용되는 parser
-// bytes.Cut()만 n회 호출하는 버전
-// bytes.IndexByte() 버전 다음으로 뛰어남.
+// Deprecated
+// bytes.Cut() 버전
 package main
 
 import (
@@ -32,9 +31,7 @@ func parseCuts(dst io.Writer, src io.Reader, prefix string) {
 				if !foundR || (foundN && len(beforeN) < len(beforeR)) {
 					before, after = beforeN, afterN
 				}
-				if len(before) > 0 {
-					dst.Write(concatBytes(line, bprefix, before, bsn))
-				}
+				dst.Write(concatBytes(line, bprefix, before, bsn))
 				sBytes = after
 			}
 

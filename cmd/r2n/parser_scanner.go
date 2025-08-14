@@ -1,3 +1,4 @@
+// Deprecated
 // bufio.Scanner() 버전. 미완성.
 package main
 

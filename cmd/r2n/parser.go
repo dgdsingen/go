@@ -1,3 +1,4 @@
+// Current Parser
 // bytes.IndexByte() 버전
 // bytes.Cut() 버전보다 효율적임
 package main
@@ -32,11 +33,11 @@ func parseIndexByte(dst io.Writer, src io.Reader, prefix string) {
 					found = foundN
 				}
 				before, after := sBytes[:found], sBytes[found+1:]
-				// TODO: if len(before) > 0 추가시 의도된 '\n\n'도 치환되버림. if를 빼면 불필요한 '\n'가 출력될수도 있음.
-				// '\r', '\n' 둘 다 찾았을때 before 길이 차이가 1인 경우 1개는 skip 처리한다면?
-				if len(before) > 0 {
-					dst.Write(concatBytes(line, bprefix, before, bsn))
-				}
+				// // 추가시 의도된 '\n\n'도 치환되버림
+				// if len(before) > 0 {
+				// 	dst.Write(concatBytes(line, bprefix, before, bsn))
+				// }
+				dst.Write(concatBytes(line, bprefix, before, bsn))
 				sBytes = after
 			}
 

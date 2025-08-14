@@ -1,5 +1,5 @@
+// Deprecated
 // bytes.ReplaceAll() + bytes.Cut() 버전
-// bytes.Cut()은 좋지만 bytes.ReplaceAll()가 성능과 메모리를 깎아먹음
 package main
 
 import (
@@ -29,9 +29,7 @@ func parseReplaceCut(dst io.Writer, src io.Reader, prefix string) {
 				if !found {
 					break
 				}
-				if len(before) > 0 {
-					dst.Write(concatBytes(line, bprefix, before, bsn))
-				}
+				dst.Write(concatBytes(line, bprefix, before, bsn))
 				sBytes = after
 			}
 

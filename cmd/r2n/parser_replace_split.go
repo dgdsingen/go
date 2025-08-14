@@ -1,5 +1,5 @@
+// Deprecated
 // bytes.ReplaceAll() + bytes.Split() 버전
-// bytes.ReplaceAll(), bytes.Split() 모두 성능과 메모리를 깎아먹음
 package main
 
 import (
