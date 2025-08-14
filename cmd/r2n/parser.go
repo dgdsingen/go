@@ -32,7 +32,8 @@ func parseCuts(dst io.Writer, src io.Reader, prefix string) {
 				if !foundR || (foundN && len(beforeN) < len(beforeR)) {
 					before, after = beforeN, afterN
 				}
-				// TODO: 의도된 '\n\n' 도 치환되버릴수 있고, 반대로 불필요한 '\n' 가 출력될수도 있고.
+				// TODO: if len(before) > 0 추가시 의도된 '\n\n'도 치환되버림. if를 빼면 불필요한 '\n'가 출력될수도 있음.
+				// '\r', '\n' 둘 다 찾았을때 before 길이 차이가 1인 경우 1개는 skip 처리한다면?
 				if len(before) > 0 {
 					dst.Write(concatBytes(line, bprefix, before, bn))
 				}
