@@ -26,7 +26,12 @@ func (p *IndexByteParser) Parse(bs []byte) (before, after []byte, found bool) {
 	if indexR == -1 || (indexN > -1 && indexN < indexR) {
 		index = indexN
 	}
-	return bs[:index], bs[index+1:], true
+	// 의도된 '\n\n' 은 그대로 출력하고, '\r\n' or '\n\r'은 '\n' 으로 치환해서 불필요한 줄바꿈 보정
+	cnt := 1
+	if indexR != -1 && indexN != -1 && (indexR-indexN == 1 || indexR-indexN == -1) {
+		cnt = 2
+	}
+	return bs[:index], bs[index+cnt:], true
 }
 
 type CutsParser struct{}
