@@ -23,8 +23,8 @@ func parseCuts(dst io.Writer, src io.Reader, prefix string) {
 			// 예를 들어 "12\n34\n5" 중 "12", "34"는 각각의 라인으로 잘라서 전송하고
 			for {
 				// '\r', '\n' 둘 다 검색
-				beforeR, afterR, foundR := bytes.Cut(sBytes, br)
-				beforeN, afterN, foundN := bytes.Cut(sBytes, bn)
+				beforeR, afterR, foundR := bytes.Cut(sBytes, bsr)
+				beforeN, afterN, foundN := bytes.Cut(sBytes, bsn)
 				if !foundR && !foundN {
 					break
 				}
@@ -35,7 +35,7 @@ func parseCuts(dst io.Writer, src io.Reader, prefix string) {
 				// TODO: if len(before) > 0 추가시 의도된 '\n\n'도 치환되버림. if를 빼면 불필요한 '\n'가 출력될수도 있음.
 				// '\r', '\n' 둘 다 찾았을때 before 길이 차이가 1인 경우 1개는 skip 처리한다면?
 				if len(before) > 0 {
-					dst.Write(concatBytes(line, bprefix, before, bn))
+					dst.Write(concatBytes(line, bprefix, before, bsn))
 				}
 				sBytes = after
 			}
@@ -48,7 +48,7 @@ func parseCuts(dst io.Writer, src io.Reader, prefix string) {
 
 			// chunk가 '\r' or '\n' 없이 계속 들어올때 out 무한 증가하지 않게 강제로 라인 Write
 			if stream.Len() > maxLineLength {
-				dst.Write(concatBytes(line, bprefix, stream.Bytes(), bn))
+				dst.Write(concatBytes(line, bprefix, stream.Bytes(), bsn))
 				stream.Reset()
 			}
 		}
@@ -56,7 +56,7 @@ func parseCuts(dst io.Writer, src io.Reader, prefix string) {
 		if err != nil {
 			// '\n' 없이 끝난 경우 강제로 라인 Write
 			if stream.Len() > 0 {
-				dst.Write(concatBytes(line, bprefix, stream.Bytes(), bn))
+				dst.Write(concatBytes(line, bprefix, stream.Bytes(), bsn))
 			}
 			break
 		}

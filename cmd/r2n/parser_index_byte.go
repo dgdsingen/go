@@ -1,4 +1,4 @@
-// bytes.IndexAny() 버전
+// bytes.IndexByte() 버전
 // bytes.Cut() 2회 반복에 비해 1번만 반복하고 index로 연산하기에 더 빠를 줄 알았으나 성능과 메모리 면에서 모두 밀림
 package main
 
@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-func parseIndexAny(dst io.Writer, src io.Reader, prefix string) {
+func parseIndexByte(dst io.Writer, src io.Reader, prefix string) {
 	buf := make([]byte, 4096)
 	stream := new(bytes.Buffer)
 	line := new(bytes.Buffer)
@@ -21,9 +21,15 @@ func parseIndexAny(dst io.Writer, src io.Reader, prefix string) {
 
 			// 예를 들어 "12\n34\n5" 중 "12", "34"는 각각의 라인으로 잘라서 전송하고
 			for {
-				found := bytes.IndexAny(sBytes, "\r\n")
-				if found == -1 {
+				// '\r', '\n' 둘 다 검색
+				foundR := bytes.IndexByte(sBytes, br)
+				foundN := bytes.IndexByte(sBytes, bn)
+				if foundR == -1 && foundN == -1 {
 					break
+				}
+				found := foundR
+				if foundR == -1 || (foundN > -1 && foundN < foundR) {
+					found = foundN
 				}
 				before, after := sBytes[:found], sBytes[found+1:]
 				if len(before) > 0 {
