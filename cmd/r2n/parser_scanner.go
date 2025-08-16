@@ -27,18 +27,13 @@ func splitRN() bufio.SplitFunc {
 }
 
 func parseScanner(dst io.Writer, src io.Reader, prefix string) {
+	line := &bytes.Buffer{}
+	bprefix := []byte(prefix)
+
 	scanner := bufio.NewScanner(src)
 	scanner.Split(splitRN())
-
-	bprefix := []byte(prefix)
-	bn := []byte{'\n'}
-
 	for scanner.Scan() {
-		line := scanner.Bytes()
-		// add logics: remove \r, ...
-		dst.Write(bprefix)
-		dst.Write(line)
-		dst.Write(bn)
+		dst.Write(concatBytes(line, bprefix, scanner.Bytes(), bsn))
 	}
 	if err := scanner.Err(); err != nil {
 		// error handling
