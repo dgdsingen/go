@@ -11,29 +11,29 @@ import (
 //   최대한 표준 라이브러리를 쓰자. bytes.IndexByte(), bytes.Cuts() 성능이 평균적으로 가장 좋다.
 //   slice 재할당은 성능과 메모리에 치명적이다.
 //
-// BenchmarkLongLinesParseCuts-16            1000000000       0.1922 ns/op       0 B/op   0 allocs/op
-// BenchmarkLongLinesParseIndexByte-16       1000000000       0.1996 ns/op       0 B/op   0 allocs/op
-// BenchmarkLongLinesParseReplaceCut-16      1000000000       0.2578 ns/op       1 B/op   0 allocs/op
-// BenchmarkLongLinesParseReplaceSplit-16    1000000000       0.3335 ns/op       1 B/op   0 allocs/op
-// BenchmarkLongLinesParseScanner-16         1000000000       0.9200 ns/op       0 B/op   0 allocs/op
-// BenchmarkLongLinesParseIndexAny-16                 1   1051689042 ns/op   43120 B/op   7 allocs/op
-// BenchmarkLongLinesParseSlice-16                    1   1074251042 ns/op   43120 B/op   7 allocs/op
+// BenchmarkLongLinesParseIndexByte-16      1000000000       0.1921 ns/op       0 B/op   0 allocs/op
+// BenchmarkLongLinesParseCuts-16           1000000000       0.2048 ns/op       0 B/op   0 allocs/op
+// BenchmarkLongLinesParseReplaceCut-16     1000000000       0.2686 ns/op       1 B/op   0 allocs/op
+// BenchmarkLongLinesParseReplaceSplit-16   1000000000       0.3604 ns/op       1 B/op   0 allocs/op
+// BenchmarkLongLinesParseScanner-16        1000000000       0.8052 ns/op       0 B/op   0 allocs/op
+// BenchmarkLongLinesParseSlice-16                   1   1020488166 ns/op   43120 B/op   7 allocs/op
+// BenchmarkLongLinesParseIndexAny-16                1   1079026541 ns/op   43120 B/op   7 allocs/op
 //
-// BenchmarkMixedLinesParseIndexAny-16       1000000000       0.2303 ns/op       0 B/op   0 allocs/op
-// BenchmarkMixedLinesParseSlice-16          1000000000       0.2316 ns/op       0 B/op   0 allocs/op
-// BenchmarkMixedLinesParseReplaceCut-16     1000000000       0.2321 ns/op       0 B/op   0 allocs/op
-// BenchmarkMixedLinesParseIndexByte-16      1000000000       0.2338 ns/op       0 B/op   0 allocs/op
-// BenchmarkMixedLinesParseReplaceSplit-16   1000000000       0.2358 ns/op       0 B/op   0 allocs/op
-// BenchmarkMixedLinesParseCuts-16           1000000000       0.2480 ns/op       0 B/op   0 allocs/op
-// BenchmarkMixedLinesParseScanner-16        1000000000       0.5455 ns/op       0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseIndexByte-16     1000000000       0.1853 ns/op       0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseCuts-16          1000000000       0.2433 ns/op       0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseIndexAny-16      1000000000       0.2472 ns/op       0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseReplaceCut-16    1000000000       0.2522 ns/op       0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseSlice-16         1000000000       0.2571 ns/op       0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseScanner-16       1000000000       0.2598 ns/op       0 B/op   0 allocs/op
+// BenchmarkMixedLinesParseReplaceSplit-16  1000000000       0.2682 ns/op       0 B/op   0 allocs/op
 //
-// BenchmarkShortLinesParseIndexByte-16      1000000000      0.05764 ns/op       0 B/op   0 allocs/op
-// BenchmarkShortLinesParseReplaceCut-16     1000000000      0.05930 ns/op       0 B/op   0 allocs/op
-// BenchmarkShortLinesParseReplaceSplit-16   1000000000      0.06039 ns/op       0 B/op   0 allocs/op
-// BenchmarkShortLinesParseIndexAny-16       1000000000      0.06096 ns/op       0 B/op   0 allocs/op
-// BenchmarkShortLinesParseSlice-16          1000000000      0.06107 ns/op       0 B/op   0 allocs/op
-// BenchmarkShortLinesParseCuts-16           1000000000      0.06369 ns/op       0 B/op   0 allocs/op
-// BenchmarkShortLinesParseScanner-16        1000000000      0.18410 ns/op       0 B/op   0 allocs/op
+// BenchmarkShortLinesParseScanner-16       1000000000       0.06473 ns/op      0 B/op   0 allocs/op
+// BenchmarkShortLinesParseIndexByte-16     1000000000       0.06546 ns/op      0 B/op   0 allocs/op
+// BenchmarkShortLinesParseCuts-16          1000000000       0.06614 ns/op      0 B/op   0 allocs/op
+// BenchmarkShortLinesParseReplaceSplit-16  1000000000       0.06618 ns/op      0 B/op   0 allocs/op
+// BenchmarkShortLinesParseSlice-16         1000000000       0.06640 ns/op      0 B/op   0 allocs/op
+// BenchmarkShortLinesParseReplaceCut-16    1000000000       0.06657 ns/op      0 B/op   0 allocs/op
+// BenchmarkShortLinesParseIndexAny-16      1000000000       0.06727 ns/op      0 B/op   0 allocs/op
 
 var (
 	count = 100000
