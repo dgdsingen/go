@@ -56,12 +56,27 @@ func PidFile() string {
 	return home + "/.gui.pid"
 }
 
-func readPidFile() []byte {
+func existsPidFile() bool {
+	if _, err := os.Stat(pidFile); !os.IsNotExist(err) {
+		return true
+	}
+	return false
+}
+
+func readPidFile() int {
+	if !existsPidFile() {
+		return -1
+	}
+
 	data, err := os.ReadFile(pidFile)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("os.ReadFile(): %v\n", err)
 	}
-	return data
+	pid, err := strconv.Atoi(string(data))
+	if err != nil {
+		fmt.Printf("Atoi(): %v\n", err)
+	}
+	return pid
 }
 
 func writePidFile() {
@@ -72,11 +87,17 @@ func deletePidFile() {
 	os.Remove(pidFile)
 }
 
-func existsPidFile() bool {
-	if _, err := os.Stat(pidFile); !os.IsNotExist(err) {
-		return true
+func getProcess(pid int) (*os.Process, error) {
+	proc, err := os.FindProcess(pid)
+	if err != nil {
+		fmt.Printf("find proc error: %v\n", err)
+		return nil, err
 	}
-	return false
+	return proc, err
+}
+
+func existsProcess(proc *os.Process) bool {
+	return proc.Signal(syscall.Signal(0)) == nil
 }
 
 func main() {
@@ -89,9 +110,30 @@ func main() {
 		return
 	}
 
-	if existsPidFile() {
-		fmt.Printf("gui (PID=%s) is already running.\n", readPidFile())
-		os.Exit(1)
+	args := flag.Args()
+	onoff := ""
+	if len(args) == 1 {
+		onoff = args[0]
+	}
+
+	pid := readPidFile()
+	proc, err := getProcess(pid)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+	}
+
+	switch onoff {
+	case "on":
+		if existsProcess(proc) {
+			fmt.Printf("gui (PID=%s) is running.\n", pid)
+			os.Exit(0)
+		}
+	case "off":
+		proc.Signal(syscall.SIGTERM)
+		os.Exit(0)
+	case "":
+		fmt.Printf("gui (PID=%d) (exists=%v).\n", pid, existsProcess(proc))
+		os.Exit(0)
 	}
 
 	writePidFile()
