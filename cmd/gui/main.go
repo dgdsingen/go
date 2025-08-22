@@ -133,7 +133,7 @@ func main() {
 	switch onoff {
 	case "on":
 		if existsProcess(proc) {
-			fmt.Printf("gui (PID=%d) is running.\n", pid)
+			fmt.Printf("gui (PID=%d) is already running.\n", pid)
 		} else {
 			cmd := exec.Command("gui", "-on", "-total-sec", strconv.Itoa(*totalSec))
 			err := cmd.Start()
