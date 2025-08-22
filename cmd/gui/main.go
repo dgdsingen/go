@@ -108,7 +108,6 @@ func main() {
 			os.Exit(0)
 		default:
 			time.Sleep(1 * time.Second)
-			println(stepSec)
 
 			if *totalSec--; *totalSec == 0 {
 				break
