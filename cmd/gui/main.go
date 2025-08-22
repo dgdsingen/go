@@ -117,6 +117,8 @@ func main() {
 		return
 	}
 
+	// `gui -total-sec=3 on` 순서로 실행해야 정상 (args=[on])
+	// `gui on -total-sec=3` 순서로 실행하면 안됨 (args=[on -total-sec=3])
 	args := flag.Args()
 	onoff := ""
 	if len(args) == 1 {
