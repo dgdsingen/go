@@ -15,10 +15,10 @@ import (
 )
 
 var (
-	appName = "gui"
-	version = "undefined"
-	pid     = os.Getpid()
-	pidFile = PidFile()
+	appName     = "gui"
+	version     = "undefined"
+	pid         = os.Getpid()
+	pidFilePath = PidFilePath()
 )
 
 func fmtVersion() string {
@@ -49,7 +49,7 @@ func StepSec() int {
 // 	return false
 // }
 
-func PidFile() string {
+func PidFilePath() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Printf("%v\n", err)
@@ -58,22 +58,22 @@ func PidFile() string {
 }
 
 func existsPidFile() bool {
-	if _, err := os.Stat(pidFile); !os.IsNotExist(err) {
+	if _, err := os.Stat(pidFilePath); !os.IsNotExist(err) {
 		return true
 	}
 	return false
 }
 
-func readPidFile() int {
+func readPidFile() (pid int) {
 	if !existsPidFile() {
 		return -1
 	}
 
-	data, err := os.ReadFile(pidFile)
+	data, err := os.ReadFile(pidFilePath)
 	if err != nil {
 		fmt.Printf("os.ReadFile(): %v\n", err)
 	}
-	pid, err := strconv.Atoi(string(data))
+	pid, err = strconv.Atoi(string(data))
 	if err != nil {
 		fmt.Printf("Atoi(): %v\n", err)
 	}
@@ -81,14 +81,14 @@ func readPidFile() int {
 }
 
 func writePidFile() {
-	os.WriteFile(pidFile, []byte(strconv.Itoa(pid)), 0644)
+	os.WriteFile(pidFilePath, []byte(strconv.Itoa(pid)), 0644)
 }
 
 func deletePidFile() {
-	os.Remove(pidFile)
+	os.Remove(pidFilePath)
 }
 
-func getProcess(pid int) (*os.Process, error) {
+func Process(pid int) (*os.Process, error) {
 	proc, err := os.FindProcess(pid)
 	if err != nil {
 		fmt.Printf("find proc error: %v\n", err)
@@ -119,7 +119,7 @@ func main() {
 	}
 
 	pid := readPidFile()
-	proc, err := getProcess(pid)
+	proc, err := Process(pid)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 	}
