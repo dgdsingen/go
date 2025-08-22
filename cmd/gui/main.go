@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"os/exec"
 	"os/signal"
 	"strconv"
 	"syscall"
@@ -101,6 +102,7 @@ func existsProcess(proc *os.Process) bool {
 }
 
 func main() {
+	on := flag.Bool("on", false, "on")
 	totalSec := flag.Int("total-sec", -1, "total seconds")
 	versionFlag := flag.Bool("version", false, "gui version")
 	flag.Parse()
@@ -122,17 +124,26 @@ func main() {
 		fmt.Printf("%v\n", err)
 	}
 
+	// `gui on` = background로 `gui -on` 띄우고 자신은 종료
 	switch onoff {
 	case "on":
 		if existsProcess(proc) {
-			fmt.Printf("gui (PID=%s) is running.\n", pid)
-			os.Exit(0)
+			fmt.Printf("gui (PID=%d) is running.\n", pid)
+		} else {
+			cmd := exec.Command("gui", "-on")
+			err := cmd.Start()
+			if err != nil {
+				fmt.Printf("cmd error: %v\n", err)
+			}
 		}
 	case "off":
 		proc.Signal(syscall.SIGTERM)
-		os.Exit(0)
-	case "":
+	default:
 		fmt.Printf("gui (PID=%d) (exists=%v).\n", pid, existsProcess(proc))
+	}
+
+	// `gui -on` = foreground로 gui를 실제 실행
+	if !*on {
 		os.Exit(0)
 	}
 
