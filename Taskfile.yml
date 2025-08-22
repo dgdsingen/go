@@ -96,20 +96,29 @@ tasks:
           --data-binary "@{{.ITEM}}"
 
   build:
-    deps: [build:r2n]
+    deps: [build:r2n, build:gui]
+
+  build:gui:
+    sources: ['{{.PWD}}/cmd/gui/*.go', '{{.PWD}}/.env']
+    generates: ['{{.HOME}}/bin/gui']
+    method: timestamp
+    vars:
+      LATEST_VERSION: {sh: "rg 'GUI_VERSION=(.*)' -r '$1' -o '{{.PWD}}/.env'"}
+    cmds:
+      - go build -o "{{.HOME}}/bin/gui" -ldflags "-s -w -X main.version={{.LATEST_VERSION}}" -tags netgo ./cmd/gui
 
   build:r2n:
     sources: ['{{.PWD}}/cmd/r2n/*.go', '{{.PWD}}/.env']
     generates: ['{{.PWD}}/bin/r2n-*']
     method: timestamp
     vars:
-      R2N_LATEST_VERSION: {sh: "rg 'R2N_VERSION=(.*)' -r '$1' -o '{{.PWD}}/.env'"}
+      LATEST_VERSION: {sh: "rg 'R2N_VERSION=(.*)' -r '$1' -o '{{.PWD}}/.env'"}
     cmds:
       - task: go:build:cross
         vars:
           PACKAGE: ./cmd/r2n
           APP_NAME: r2n
-          CLI_ARGS: -ldflags "-s -w -extldflags '-static' -X main.version={{.R2N_LATEST_VERSION}}" -tags netgo
+          CLI_ARGS: -ldflags "-s -w -extldflags '-static' -X main.version={{.LATEST_VERSION}}" -tags netgo
 
   go:build:cross:
     deps:
