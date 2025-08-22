@@ -101,6 +101,11 @@ func existsProcess(proc *os.Process) bool {
 	return proc.Signal(syscall.Signal(0)) == nil
 }
 
+func exitProcess() {
+	deletePidFile()
+	os.Exit(0)
+}
+
 func main() {
 	on := flag.Bool("on", false, "on")
 	totalSec := flag.Int("total-sec", -1, "total seconds")
@@ -130,7 +135,7 @@ func main() {
 		if existsProcess(proc) {
 			fmt.Printf("gui (PID=%d) is running.\n", pid)
 		} else {
-			cmd := exec.Command("gui", "-on")
+			cmd := exec.Command("gui", "-on", "-total-sec", strconv.Itoa(*totalSec))
 			err := cmd.Start()
 			if err != nil {
 				fmt.Printf("cmd error: %v\n", err)
@@ -157,13 +162,12 @@ func main() {
 	for {
 		select {
 		case <-done:
-			deletePidFile()
-			os.Exit(0)
+			exitProcess()
 		default:
 			time.Sleep(1 * time.Second)
 
 			if *totalSec--; *totalSec == 0 {
-				break
+				exitProcess()
 			}
 
 			if stepSec--; stepSec <= 0 {
