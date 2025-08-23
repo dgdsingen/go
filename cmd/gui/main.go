@@ -24,7 +24,7 @@ func fmtVersion() string {
 }
 
 func StepSec() int {
-	return rand.Intn(5) + 10
+	return rand.Intn(5) + 20
 }
 
 func RandPointGen(points []int) func() int {
