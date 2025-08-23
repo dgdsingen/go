@@ -27,10 +27,9 @@ func StepSec() int {
 	return rand.Intn(5) + 10
 }
 
-func randGenerator() func() int {
-	coordinates := []int{-1, 1}
+func RandPointGen(points []int) func() int {
 	f := func() int {
-		return coordinates[rand.Intn(2)]
+		return points[rand.Intn(len(points))]
 	}
 	return f
 }
@@ -172,7 +171,7 @@ func main() {
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	stepSec := StepSec()
-	randGen := randGenerator()
+	randPoint := RandPointGen([]int{-1, 1})
 
 	for {
 		select {
@@ -186,7 +185,7 @@ func main() {
 			}
 
 			if stepSec--; stepSec <= 0 {
-				robotgo.MoveRelative(randGen(), randGen())
+				robotgo.MoveRelative(randPoint(), randPoint())
 				stepSec = StepSec()
 			}
 		}
