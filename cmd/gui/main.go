@@ -142,10 +142,9 @@ func main() {
 	proc := Process(pid)
 	existsProc := existsProcess(proc)
 
-	// `gui -on` = foreground로 gui를 실제 실행
 	if !*on {
-		// `gui on` = background로 `gui -on` 띄우고 자신은 종료
 		switch onoff {
+		// `gui on` = background로 `gui -on` 띄우고 자신은 종료
 		case "on":
 			if existsProc {
 				fmt.Printf("gui (PID=%d) is already running.\n", pid)
@@ -164,6 +163,7 @@ func main() {
 		os.Exit(0)
 	}
 
+	// `gui -on` = foreground로 gui를 실제 실행
 	if existsProc {
 		fmt.Printf("gui (PID=%d) is already running.\n", pid)
 		os.Exit(0)
