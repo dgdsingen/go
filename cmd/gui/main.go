@@ -142,30 +142,26 @@ func main() {
 	proc := Process(pid)
 	existsProc := existsProcess(proc)
 
+	if existsProc && (*on || onoff == "on") {
+		fmt.Printf("gui (PID=%d) is already running.\n", pid)
+		os.Exit(0)
+	}
+
+	// `gui -on` = foreground로 gui를 실제 실행
 	if !*on {
 		switch onoff {
 		// `gui on` = background로 `gui -on` 띄우고 자신은 종료
 		case "on":
-			if existsProc {
-				fmt.Printf("gui (PID=%d) is already running.\n", pid)
-			} else {
-				cmd := exec.Command("gui", "-on", "-total-sec", strconv.Itoa(*totalSec))
-				err := cmd.Start()
-				if err != nil {
-					fmt.Printf("cmd error: %v\n", err)
-				}
+			cmd := exec.Command("gui", "-on", "-total-sec", strconv.Itoa(*totalSec))
+			err := cmd.Start()
+			if err != nil {
+				fmt.Printf("cmd error: %v\n", err)
 			}
 		case "off":
 			proc.Signal(syscall.SIGTERM)
 		default:
 			fmt.Printf("gui (PID=%d) (exists=%v).\n", pid, existsProc)
 		}
-		os.Exit(0)
-	}
-
-	// `gui -on` = foreground로 gui를 실제 실행
-	if existsProc {
-		fmt.Printf("gui (PID=%d) is already running.\n", pid)
 		os.Exit(0)
 	}
 
