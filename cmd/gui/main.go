@@ -15,10 +15,8 @@ import (
 )
 
 var (
-	appName     = "gui"
-	version     = "undefined"
-	pid         = os.Getpid()
-	pidFilePath = PidFilePath()
+	appName = "gui"
+	version = "undefined"
 )
 
 func fmtVersion() string {
@@ -27,6 +25,14 @@ func fmtVersion() string {
 
 func StepSec() int {
 	return rand.Intn(5) + 10
+}
+
+func randGenerator() func() int {
+	coordinates := []int{-1, 1}
+	f := func() int {
+		return coordinates[rand.Intn(2)]
+	}
+	return f
 }
 
 // func hasProcess(procName string) bool {
@@ -52,20 +58,20 @@ func StepSec() int {
 func PidFilePath() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("os.UserHomeDir(): %v\n", err)
 	}
 	return home + "/.gui.pid"
 }
 
-func existsPidFile() bool {
+func existsPidFile(pidFilePath string) bool {
 	if _, err := os.Stat(pidFilePath); !os.IsNotExist(err) {
 		return true
 	}
 	return false
 }
 
-func readPidFile() (pid int) {
-	if !existsPidFile() {
+func readPidFile(pidFilePath string) (pid int) {
+	if !existsPidFile(pidFilePath) {
 		return -1
 	}
 
@@ -80,29 +86,35 @@ func readPidFile() (pid int) {
 	return pid
 }
 
-func writePidFile() {
-	os.WriteFile(pidFilePath, []byte(strconv.Itoa(pid)), 0644)
+func writePidFile(pidFilePath string, pid int) {
+	err := os.WriteFile(pidFilePath, []byte(strconv.Itoa(pid)), 0644)
+	if err != nil {
+		fmt.Printf("os.WriteFile(): %v\n", err)
+	}
 }
 
-func deletePidFile() {
-	os.Remove(pidFilePath)
+func deletePidFile(pidFilePath string) {
+	err := os.Remove(pidFilePath)
+	if err != nil {
+		fmt.Printf("os.Remove(): %v\n", err)
+	}
 }
 
-func Process(pid int) (*os.Process, error) {
+func Process(pid int) *os.Process {
 	proc, err := os.FindProcess(pid)
 	if err != nil {
-		fmt.Printf("find proc error: %v\n", err)
-		return nil, err
+		fmt.Printf("os.FindProcess(): %v\n", err)
+		return nil
 	}
-	return proc, err
+	return proc
 }
 
 func existsProcess(proc *os.Process) bool {
 	return proc.Signal(syscall.Signal(0)) == nil
 }
 
-func exitProcess() {
-	deletePidFile()
+func exitProcess(pidFilePath string) {
+	deletePidFile(pidFilePath)
 	os.Exit(0)
 }
 
@@ -125,58 +137,60 @@ func main() {
 		onoff = args[0]
 	}
 
-	pid := readPidFile()
-	proc, err := Process(pid)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-	}
-
-	// `gui on` = background로 `gui -on` 띄우고 자신은 종료
-	switch onoff {
-	case "on":
-		if existsProcess(proc) {
-			fmt.Printf("gui (PID=%d) is already running.\n", pid)
-		} else {
-			cmd := exec.Command("gui", "-on", "-total-sec", strconv.Itoa(*totalSec))
-			err := cmd.Start()
-			if err != nil {
-				fmt.Printf("cmd error: %v\n", err)
-			}
-		}
-	case "off":
-		proc.Signal(syscall.SIGTERM)
-	default:
-		fmt.Printf("gui (PID=%d) (exists=%v).\n", pid, existsProcess(proc))
-	}
+	pidFilePath := PidFilePath()
+	pid := readPidFile(pidFilePath)
+	proc := Process(pid)
+	existsProc := existsProcess(proc)
 
 	// `gui -on` = foreground로 gui를 실제 실행
 	if !*on {
+		// `gui on` = background로 `gui -on` 띄우고 자신은 종료
+		switch onoff {
+		case "on":
+			if existsProc {
+				fmt.Printf("gui (PID=%d) is already running.\n", pid)
+			} else {
+				cmd := exec.Command("gui", "-on", "-total-sec", strconv.Itoa(*totalSec))
+				err := cmd.Start()
+				if err != nil {
+					fmt.Printf("cmd error: %v\n", err)
+				}
+			}
+		case "off":
+			proc.Signal(syscall.SIGTERM)
+		default:
+			fmt.Printf("gui (PID=%d) (exists=%v).\n", pid, existsProc)
+		}
 		os.Exit(0)
 	}
 
-	writePidFile()
+	if existsProc {
+		fmt.Printf("gui (PID=%d) is already running.\n", pid)
+		os.Exit(0)
+	}
+
+	pid = os.Getpid()
+	writePidFile(pidFilePath, pid)
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	stepSec := StepSec()
+	randGen := randGenerator()
 
 	for {
 		select {
 		case <-done:
-			exitProcess()
+			exitProcess(pidFilePath)
 		default:
 			time.Sleep(1 * time.Second)
 
 			if *totalSec--; *totalSec == 0 {
-				exitProcess()
+				exitProcess(pidFilePath)
 			}
 
 			if stepSec--; stepSec <= 0 {
-				x := []int{-1, 1}[rand.Intn(2)]
-				y := []int{-1, 1}[rand.Intn(2)]
-				robotgo.MoveRelative(x, y)
-
+				robotgo.MoveRelative(randGen(), randGen())
 				stepSec = StepSec()
 			}
 		}
