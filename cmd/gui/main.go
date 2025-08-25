@@ -23,15 +23,18 @@ func fmtVersion() string {
 	return fmt.Sprintf("%s %s", appName, version)
 }
 
+func SecToDuration(s int) time.Duration {
+	return time.Duration(s) * time.Second
+}
+
 func StepSec() int {
 	return rand.Intn(5) + 20
 }
 
 func RandPointGen(points []int) func() int {
-	f := func() int {
+	return func() int {
 		return points[rand.Intn(len(points))]
 	}
-	return f
 }
 
 // func hasProcess(procName string) bool {
@@ -167,27 +170,27 @@ func main() {
 	pid = os.Getpid()
 	writePidFile(pidFilePath, pid)
 
+	randPoint := RandPointGen([]int{-1, 1})
+
+	ticker := time.NewTicker(SecToDuration(StepSec()))
+
+	timer := &time.Timer{}
+	if *totalSec > 0 {
+		timer = time.NewTimer(SecToDuration(*totalSec))
+	}
+
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	stepSec := StepSec()
-	randPoint := RandPointGen([]int{-1, 1})
-
 	for {
 		select {
+		case <-ticker.C:
+			robotgo.MoveRelative(randPoint(), randPoint())
+			ticker.Reset(SecToDuration(StepSec()))
+		case <-timer.C:
+			done <- syscall.SIGTERM
 		case <-done:
 			exitProcess(pidFilePath)
-		default:
-			time.Sleep(1 * time.Second)
-
-			if *totalSec--; *totalSec == 0 {
-				exitProcess(pidFilePath)
-			}
-
-			if stepSec--; stepSec <= 0 {
-				robotgo.MoveRelative(randPoint(), randPoint())
-				stepSec = StepSec()
-			}
 		}
 	}
 }
