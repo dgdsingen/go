@@ -157,10 +157,13 @@ func main() {
 			cmd := exec.Command("gui", "-on", "-total-sec", strconv.Itoa(*totalSec))
 			err := cmd.Start()
 			if err != nil {
-				fmt.Printf("cmd error: %v\n", err)
+				fmt.Printf("cmd.Start(): %v\n", err)
 			}
 		case "off":
-			proc.Signal(syscall.SIGTERM)
+			err := proc.Signal(syscall.SIGTERM)
+			if err != nil {
+				fmt.Printf("proc.Signal(): %v\n", err)
+			}
 		default:
 			fmt.Printf("gui (PID=%d) (exists=%v).\n", pid, existsProc)
 		}
