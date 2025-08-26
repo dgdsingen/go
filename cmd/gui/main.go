@@ -149,10 +149,10 @@ func main() {
 		os.Exit(0)
 	}
 
+	// `gui on` = background로 `gui -on` 띄우고 자신은 종료
 	// `gui -on` = foreground로 gui를 실제 실행
 	if !*on {
 		switch onoff {
-		// `gui on` = background로 `gui -on` 띄우고 자신은 종료
 		case "on":
 			cmd := exec.Command("gui", "-on", "-total-sec", strconv.Itoa(*totalSec))
 			err := cmd.Start()
