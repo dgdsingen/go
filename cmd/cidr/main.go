@@ -1,35 +1,55 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"os"
+	"strings"
 )
 
 func main() {
-	if len(os.Args) != 3 {
-		fmt.Printf("Usage: %s <IP> <CIDR>\n", os.Args[0])
+	v := flag.Bool("v", false, "Invert match")
+	flag.Parse()
+
+	if len(os.Args) < 3 {
+		fmt.Printf("Usage: %s <IP...> <CIDR...>\n", os.Args[0])
 		os.Exit(1)
 	}
 
-	ipStr := os.Args[1]
-	cidrStr := os.Args[2]
-
-	ip := net.ParseIP(ipStr)
-	if ip == nil {
-		fmt.Printf("Invalid IP: %s\n", ipStr)
-		os.Exit(1)
+	ipSlice := []net.IP{}
+	cidrSlice := []*net.IPNet{}
+	for _, arg := range flag.Args() {
+		if strings.Contains(arg, "/") {
+			_, cidr, err := net.ParseCIDR(arg)
+			if err != nil {
+				fmt.Printf("Invalid CIDR: %s\n", arg)
+				os.Exit(1)
+			}
+			cidrSlice = append(cidrSlice, cidr)
+		} else {
+			ip := net.ParseIP(arg)
+			if ip == nil {
+				fmt.Printf("Invalid IP: %s\n", arg)
+				os.Exit(1)
+			}
+			ipSlice = append(ipSlice, ip)
+		}
 	}
 
-	_, cidr, err := net.ParseCIDR(cidrStr)
-	if err != nil {
-		fmt.Printf("Invalid CIDR: %s\n", cidrStr)
-		os.Exit(1)
+	if len(ipSlice) == 0 {
+		fmt.Println("No IP.")
 	}
 
-	if cidr.Contains(ip) {
-		os.Exit(0)
-	} else {
-		os.Exit(1)
+	if len(cidrSlice) == 0 {
+		fmt.Println("No CIDR.")
+	}
+
+	for _, ip := range ipSlice {
+		for _, cidr := range cidrSlice {
+			if cidr.Contains(ip) != *v {
+				fmt.Println(ip)
+			}
+		}
 	}
 }
