@@ -8,6 +8,11 @@ import (
 	"strings"
 )
 
+type IP struct {
+	net.IP
+	inCidr bool
+}
+
 func main() {
 	v := flag.Bool("v", false, "Invert match")
 	flag.Parse()
@@ -17,7 +22,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ipSlice := []net.IP{}
+	ipSlice := []*IP{}
 	cidrSlice := []*net.IPNet{}
 	for _, arg := range flag.Args() {
 		if strings.Contains(arg, "/") {
@@ -33,7 +38,7 @@ func main() {
 				fmt.Printf("Invalid IP: %s\n", arg)
 				os.Exit(1)
 			}
-			ipSlice = append(ipSlice, ip)
+			ipSlice = append(ipSlice, &IP{IP: ip})
 		}
 	}
 
@@ -47,9 +52,15 @@ func main() {
 
 	for _, ip := range ipSlice {
 		for _, cidr := range cidrSlice {
-			if cidr.Contains(ip) != *v {
-				fmt.Println(ip)
+			if cidr.Contains(ip.IP) {
+				ip.inCidr = true
 			}
+		}
+	}
+
+	for _, ip := range ipSlice {
+		if ip.inCidr != *v {
+			fmt.Println(ip)
 		}
 	}
 }
