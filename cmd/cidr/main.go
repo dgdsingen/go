@@ -58,9 +58,14 @@ func main() {
 		}
 	}
 
+	result := []string{}
 	for _, ip := range ipSlice {
 		if ip.inCidr != *v {
-			fmt.Println(ip)
+			result = append(result, ip.String())
 		}
 	}
+	if len(result) == 0 {
+		result = append(result, "No result.")
+	}
+	fmt.Println(strings.Join(result, "\n"))
 }
