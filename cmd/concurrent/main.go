@@ -72,6 +72,12 @@ func main() {
 		return
 	}
 
+	remainArgs := flag.Args()
+	var args []any = make([]any, len(remainArgs))
+	for i, s := range remainArgs {
+		args[i] = s
+	}
+
 	wg := &sync.WaitGroup{}
 	var reader io.Reader = os.Stdin
 	if *cmd != "" {
@@ -83,6 +89,8 @@ func main() {
 		if line == "" {
 			continue
 		}
+
+		line = fmt.Sprintf(line, args...)
 
 		for cnt := range *count {
 			cntLine := strings.ReplaceAll(line, "{{.Count}}", strconv.Itoa(cnt))
