@@ -96,29 +96,46 @@ tasks:
           --data-binary "@{{.ITEM}}"
 
   build:
-    deps: [build:r2n, build:gui]
+    ignore_error: true
+    deps:
+      - build:cross:r2n
+      - build:gui
+      - build:concurrent
 
-  build:gui:
-    sources: ['{{.PWD}}/cmd/gui/*.go', '{{.PWD}}/.env']
-    generates: ['{{.HOME}}/bin/gui']
-    method: timestamp
+  build:cross:*:
     vars:
-      LATEST_VERSION: {sh: "rg 'GUI_VERSION=(.*)' -r '$1' -o '{{.PWD}}/.env'"}
-    cmds:
-      - go build -o "{{.HOME}}/bin/gui" -ldflags "-s -w -X main.version={{.LATEST_VERSION}}" -tags netgo ./cmd/gui
-
-  build:r2n:
-    sources: ['{{.PWD}}/cmd/r2n/*.go', '{{.PWD}}/.env']
-    generates: ['{{.PWD}}/bin/r2n-*']
+      APP_NAME: '{{index .MATCH 0}}'
+      LATEST_VERSION: {sh: "rg '{{.APP_NAME | upper}}_VERSION=(.*)' -r '$1' -o '{{.PWD}}/.env'"}
+    sources: ['{{.PWD}}/cmd/{{.APP_NAME}}/*.go', '{{.PWD}}/.env']
+    generates: ['{{.PWD}}/bin/{{.APP_NAME}}-*']
     method: timestamp
-    vars:
-      LATEST_VERSION: {sh: "rg 'R2N_VERSION=(.*)' -r '$1' -o '{{.PWD}}/.env'"}
     cmds:
       - task: go:build:cross
         vars:
-          PACKAGE: ./cmd/r2n
-          APP_NAME: r2n
+          PACKAGE: ./cmd/{{.APP_NAME}}
+          APP_NAME: '{{.APP_NAME}}'
           CLI_ARGS: -ldflags "-s -w -extldflags '-static' -X main.version={{.LATEST_VERSION}}" -tags netgo
+
+  build:*:
+    ignore_error: true
+    vars:
+      APP_NAME: '{{index .MATCH 0}}'
+      LATEST_VERSION: {sh: "rg '{{.APP_NAME | upper}}_VERSION=(.*)' -r '$1' -o '{{.PWD}}/.env'"}
+    sources: ['{{.PWD}}/cmd/{{.APP_NAME}}/*.go', '{{.PWD}}/.env']
+    generates: ['{{.PWD}}/bin/{{.APP_NAME}}-*']
+    method: timestamp
+    cmds:
+      - |
+        {{if and (.APP_NAME | eq "gui") (.GOOS | ne "darwin")}}
+          echo "skip. {{.APP_NAME}} only support darwin."
+          exit 1
+        {{end}}
+      - task: go:build
+        vars:
+          PACKAGE: ./cmd/{{.APP_NAME}}
+          APP_NAME: '{{.APP_NAME}}'
+          CLI_ARGS: -ldflags "-s -w -extldflags '-static' -X main.version={{.LATEST_VERSION}}" -tags netgo
+          OUTPUT: '{{.HOME}}/bin/{{.APP_NAME}}'
 
   go:build:cross:
     deps:
@@ -144,7 +161,7 @@ tasks:
     cmds:
       - >-
         {{/* android/amd64는 CGO_ENABLED=1을 요구함. 쓸일도 없는데 번거로우니 skip */}}
-        {{if and (eq "android" .GOOS) (eq "amd64" .GOARCH)}}
+        {{if and (.GOOS | eq "android") (.GOARCH | eq "amd64")}}
           exit
         {{end}}
 
