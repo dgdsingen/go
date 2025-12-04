@@ -5,8 +5,10 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -14,18 +16,65 @@ import (
 
 const appName = "concurrent"
 
-var version = "undefined"
+var (
+	version           = "undefined"
+	quotePrefixRegexp = regexp.MustCompile(`^("|')(.*)`)
+	quoteSuffixRegexp = regexp.MustCompile(`(.*)("|')$`)
+)
 
 func fmtVersion() string {
 	return fmt.Sprintf("%s %s", appName, version)
 }
 
-func runCmd(line string, wg *sync.WaitGroup) {
+// `ls -l "/some/spaces in path"` 를 ["ls", "-l", "/some/spaces in path"] 로 변경
+func splitCmd(cmd string) (cmds []string) {
+	sb := strings.Builder{}
+	concatting := false
+	for s := range strings.FieldsSeq(cmd) {
+		if quotePrefixRegexp.MatchString(s) {
+			concatting = true
+			s = quotePrefixRegexp.FindStringSubmatch(s)[2]
+		} else if quoteSuffixRegexp.MatchString(s) {
+			concatting = false
+			s = quoteSuffixRegexp.FindStringSubmatch(s)[1]
+			sb.WriteString(s)
+			cmds = append(cmds, sb.String())
+			sb.Reset()
+			continue
+		}
+
+		if concatting {
+			sb.WriteString(s)
+			sb.WriteString(" ")
+		} else {
+			cmds = append(cmds, s)
+		}
+	}
+	return cmds
+}
+
+func addCmdArgs(cmd string, args []string) string {
+	if cmd == "" {
+		return strings.Join(args, " ")
+	}
+	for _, arg := range args {
+		// 공백이 arg는 "로 묶어줌
+		if strings.Contains(arg, " ") {
+			arg = `"` + arg + `"`
+		}
+		cmd = strings.Replace(cmd, "{}", arg, 1)
+	}
+	return cmd
+}
+
+func addCmdCount(cmd string, count int) string {
+	return strings.ReplaceAll(cmd, "{{.Count}}", strconv.Itoa(count))
+}
+
+func runCmd(lines []string, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	fields := strings.Fields(line)
-
-	cmd := exec.Command(fields[0], fields[1:]...)
+	cmd := exec.Command(lines[0], lines[1:]...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		panic(err)
@@ -44,14 +93,14 @@ func runCmd(line string, wg *sync.WaitGroup) {
 		defer cmdWg.Done()
 		_, err := io.Copy(os.Stdout, stdout)
 		if err != nil && err != io.EOF {
-			fmt.Printf("%v\n", err)
+			log.Printf("%v\n", err)
 		}
 	}()
 	go func() {
 		defer cmdWg.Done()
 		_, err := io.Copy(os.Stderr, stderr)
 		if err != nil && err != io.EOF {
-			fmt.Printf("%v\n", err)
+			log.Printf("%v\n", err)
 		}
 	}()
 	cmdWg.Wait()
@@ -64,6 +113,7 @@ func runCmd(line string, wg *sync.WaitGroup) {
 func main() {
 	cmd := flag.String("cmd", "", "Command")
 	count := flag.Int("count", 1, "Count")
+	useStdin := flag.Bool("i", false, "Use stdin")
 	versionFlag := flag.Bool("version", false, "Version")
 	flag.Parse()
 
@@ -72,35 +122,74 @@ func main() {
 		return
 	}
 
-	remainArgs := flag.Args()
-	var args []any = make([]any, len(remainArgs))
-	for i, s := range remainArgs {
-		args[i] = s
+	flagArgsCmd := addCmdArgs(*cmd, flag.Args())
+	// fmt.Printf("%v\n", argsCmd)
+
+	if flagArgsCmd == "" && !*useStdin {
+		fmt.Println("use -cmd or -i(stdin)")
+		os.Exit(1)
 	}
 
 	wg := &sync.WaitGroup{}
-	var reader io.Reader = os.Stdin
-	if *cmd != "" {
-		reader = strings.NewReader(*cmd)
-	}
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
+	if *useStdin {
+		// `echo 1 | concurrent -cmd="echo 1"` 실행시 정상이지만
+		// `concurrent -cmd="echo 1"` 실행시 stdin 값이 들어올때까지 기다린다.
+		// 이를 처리할 방법이 없고 직접 구현하면 너무 복잡할듯해 -i 옵션으로 처리.
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			if err := scanner.Err(); err != nil {
+				log.Fatalf("%v\n", err)
+			}
+
+			line := strings.TrimSpace(scanner.Text())
+			if line == "" {
+				continue
+			}
+
+			for cnt := range *count {
+				stdinArgsCmd := addCmdArgs(flagArgsCmd, []string{line})
+				countCmd := addCmdCount(stdinArgsCmd, cnt)
+				cmdSlice := splitCmd(countCmd)
+				wg.Add(1)
+				go runCmd(cmdSlice, wg)
+			}
 		}
-
-		line = fmt.Sprintf(line, args...)
-
+	} else {
 		for cnt := range *count {
-			cntLine := strings.ReplaceAll(line, "{{.Count}}", strconv.Itoa(cnt))
+			countCmd := addCmdCount(flagArgsCmd, cnt)
+			cmdSlice := splitCmd(countCmd)
 			wg.Add(1)
-			go runCmd(cntLine, wg)
+			go runCmd(cmdSlice, wg)
 		}
 	}
 	wg.Wait()
-
-	if err := scanner.Err(); err != nil {
-		fmt.Printf("%v\n", err)
-	}
 }
+
+/* Test
+mkdir -p concurrent-test
+touch "concurrent-test/1.txt"
+touch "concurrent-test/some space.txt"
+
+concurrent -cmd="echo 1"
+concurrent -cmd="echo {}"
+concurrent -cmd="echo {}" 1
+concurrent -cmd="echo {}" 1 2
+concurrent -cmd="echo {} {}" 1 2
+concurrent -cmd="echo {} {}" 1 2 3
+
+concurrent -cmd="echo 1" -i # 무한 대기하는게 정상
+echo 3 | concurrent -cmd="echo 1" -i
+echo 3 | concurrent -cmd="echo {}" -i
+echo 3 | concurrent -cmd="echo {}" 1 -i
+seq 3 | concurrent -cmd="echo {}" 1 -i
+seq 3 | concurrent -cmd="echo {}" -i
+
+concurrent -cmd="echo 1" -count=2
+concurrent -cmd="echo {}" -count=2
+concurrent -cmd="echo {}" -count=2 1
+
+fd . concurrent-test | concurrent -cmd="ls -l {}" -i
+concurrent -cmd='ls -l {}' "concurrent-test/some space.txt"
+
+rm -rf concurrent-test
+*/
