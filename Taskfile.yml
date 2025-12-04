@@ -6,8 +6,8 @@ silent: true
 dotenv: ['.env', '{{.ENV}}/.env', '{{.HOME}}/.env']
 
 vars:
-  OS: '{{ternary "android" OS (any .TERMUX_VERSION)}}'
-  FILE_PREFIX: '{{.PWD}}/.task.'
+  OS: '{{any .TERMUX_VERSION | ternary "android" OS}}'
+  FILE_PREFIX: '{{.TASK_DIR}}/.task.'
 
 tasks:
   bench:
@@ -50,7 +50,7 @@ tasks:
     deps: [release:r2n]
 
   release:r2n:
-    sources: ['{{.PWD}}/.env']
+    sources: ['{{.TASK_DIR}}/.env']
     method: timestamp
     cmds:
       - defer: rm -f "{{.FILE_PREFIX}}{{.TASK}}"
@@ -81,7 +81,7 @@ tasks:
 
   github:release:asset:
     vars:
-      FILES: {sh: 'fd -t=f -d=1 "{{.FILE}}" "{{.PWD}}/bin/"'}
+      FILES: {sh: 'fd -t=f -d=1 "{{.FILE}}" "{{.TASK_DIR}}/bin/"'}
       RELEASE_ID: {sh: 'jq ".id" "{{.FILE_PREFIX}}{{.TASK}}"'}
     cmds:
       - for: {var: FILES}
@@ -96,74 +96,85 @@ tasks:
           --data-binary "@{{.ITEM}}"
 
   build:
-    ignore_error: true
     deps:
-      - build:cross:r2n
+      - build:r2n
       - build:gui
+      - build:cidr
       - build:concurrent
 
   build:cross:*:
+    ignore_error: true
     vars:
       APP_NAME: '{{index .MATCH 0}}'
-      LATEST_VERSION: {sh: "rg '{{.APP_NAME | upper}}_VERSION=(.*)' -r '$1' -o '{{.PWD}}/.env'"}
-    sources: ['{{.PWD}}/cmd/{{.APP_NAME}}/*.go', '{{.PWD}}/.env']
-    generates: ['{{.PWD}}/bin/{{.APP_NAME}}-*']
+      APP_VERSION: {sh: "rg '{{.APP_NAME | upper}}_VERSION=(.*)' -r '$1' -o '{{.TASK_DIR}}/.env'"}
+    sources: ['{{.TASK_DIR}}/cmd/{{.APP_NAME}}/*.go', '{{.TASK_DIR}}/.env']
+    generates: ['{{.TASK_DIR}}/bin/{{.APP_NAME}}-*']
     method: timestamp
     cmds:
       - task: go:build:cross
         vars:
           PACKAGE: ./cmd/{{.APP_NAME}}
           APP_NAME: '{{.APP_NAME}}'
-          CLI_ARGS: -ldflags "-s -w -extldflags '-static' -X main.version={{.LATEST_VERSION}}" -tags netgo
+          APP_VERSION: '{{.APP_VERSION}}'
+          CLI_ARGS: -ldflags "-s -w -extldflags '-static' -X main.version={{.APP_VERSION}}" -tags netgo
 
   build:*:
     ignore_error: true
     vars:
       APP_NAME: '{{index .MATCH 0}}'
-      LATEST_VERSION: {sh: "rg '{{.APP_NAME | upper}}_VERSION=(.*)' -r '$1' -o '{{.PWD}}/.env'"}
-    sources: ['{{.PWD}}/cmd/{{.APP_NAME}}/*.go', '{{.PWD}}/.env']
-    generates: ['{{.PWD}}/bin/{{.APP_NAME}}-*']
+      APP_VERSION: {sh: "rg '{{.APP_NAME | upper}}_VERSION=(.*)' -r '$1' -o '{{.TASK_DIR}}/.env'"}
+      OUTPUT: '{{.OUTPUT | default (printf "%s/bin/%s" .HOME .APP_NAME)}}'
+    sources: ['{{.TASK_DIR}}/cmd/{{.APP_NAME}}/*.go', '{{.TASK_DIR}}/.env']
+    generates: ['{{.OUTPUT}}']
     method: timestamp
     cmds:
-      - |
-        {{if and (.APP_NAME | eq "gui") (.GOOS | ne "darwin")}}
-          echo "skip. {{.APP_NAME}} only support darwin."
-          exit 1
-        {{end}}
       - task: go:build
         vars:
           PACKAGE: ./cmd/{{.APP_NAME}}
           APP_NAME: '{{.APP_NAME}}'
-          CLI_ARGS: -ldflags "-s -w -extldflags '-static' -X main.version={{.LATEST_VERSION}}" -tags netgo
-          OUTPUT: '{{.HOME}}/bin/{{.APP_NAME}}'
+          APP_VERSION: '{{.APP_VERSION}}'
+          CLI_ARGS: -ldflags "-s -w -extldflags '-static' -X main.version={{.APP_VERSION}}" -tags netgo
+          OUTPUT: {ref: .OUTPUT}
 
   go:build:cross:
+    ignore_error: true
     deps:
       - task: go:build
         vars:
           GOOS: '{{.ITEM.GOOS}}'
           GOARCH: '{{.ITEM.GOARCH}}'
-          APP_NAME: {ref: .APP_NAME}
-          PACKAGE: {ref: .PACKAGE}
+          APP_NAME: '{{.APP_NAME | default "app"}}'
+          APP_VERSION: '{{.APP_VERSION | default "undefined"}}'
+          PACKAGE: '{{.PACKAGE | default "."}}'
           CLI_ARGS: {ref: .CLI_ARGS}
+          OUTPUT: '{{.OUTPUT | default (printf "%s/bin/%s-%s-%s" .TASK_DIR .APP_NAME .ITEM.GOOS .ITEM.GOARCH)}}'
         for:
           matrix:
             GOOS: ['darwin', 'linux', 'android']
             GOARCH: ['arm64', 'amd64']
 
   go:build:
+    ignore_error: true
     vars:
       GOOS: '{{.GOOS | default .OS}}'
       GOARCH: '{{.GOARCH | default ARCH}}'
       APP_NAME: '{{.APP_NAME | default "app"}}'
+      APP_VERSION: '{{.APP_VERSION | default "undefined"}}'
       PACKAGE: '{{.PACKAGE | default "."}}'
-      OUTPUT: '{{.OUTPUT | default (list "./bin/" .APP_NAME "-" .GOOS "-" .GOARCH | join "")}}'
+      OUTPUT: '{{.OUTPUT | default .APP_NAME}}'
     cmds:
       - >-
         {{/* android/amd64는 CGO_ENABLED=1을 요구함. 쓸일도 없는데 번거로우니 skip */}}
         {{if and (.GOOS | eq "android") (.GOARCH | eq "amd64")}}
           exit
         {{end}}
+
+        {{/* gui는 darwin에서만 빌드 */}}
+        {{if and (.APP_NAME | eq "gui") (.GOOS | ne "darwin")}}
+          exit
+        {{end}}
+
+        echo 'go build APP_NAME={{.APP_NAME}} APP_VERSION={{.APP_VERSION}} GOOS={{.GOOS}} GOARCH={{.GOARCH}} PACKAGE={{.PACKAGE}} OUTPUT={{.OUTPUT}}'
 
         GOOS="{{.GOOS}}"
         GOARCH="{{.GOARCH}}"
