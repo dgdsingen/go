@@ -123,7 +123,7 @@ tasks:
     vars:
       APP_NAME: '{{index .MATCH 0}}'
       APP_VERSION: {sh: "rg '{{.APP_NAME | upper}}_VERSION=(.*)' -r '$1' -o '{{.TASK_DIR}}/.env'"}
-      OUTPUT: '{{.OUTPUT | default (printf "%s/bin/%s" .HOME .APP_NAME)}}'
+      OUTPUT: '{{.OUTPUT | default (printf "%s/go/bin/%s" .HOME .APP_NAME)}}'
     sources: ['{{.TASK_DIR}}/cmd/{{.APP_NAME}}/*.go', '{{.TASK_DIR}}/.env']
     generates: ['{{.OUTPUT}}']
     method: timestamp
