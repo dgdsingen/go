@@ -27,30 +27,33 @@ func fmtVersion() string {
 }
 
 // `ls -l "/some/spaces in path"` 를 ["ls", "-l", "/some/spaces in path"] 로 변경
-func splitCmd(cmd string) (cmds []string) {
+func splitCmd(cmd string) (cmdSlice []string) {
 	sb := strings.Builder{}
-	concatting := false
 	for s := range strings.FieldsSeq(cmd) {
+		// "" or '' 시작 조건
 		if quotePrefixRegexp.MatchString(s) {
-			concatting = true
 			s = quotePrefixRegexp.FindStringSubmatch(s)[2]
-		} else if quoteSuffixRegexp.MatchString(s) {
-			concatting = false
+			sb.WriteString(s)
+			sb.WriteString(" ")
+			continue
+		}
+		// "" or '' 종료 조건
+		if quoteSuffixRegexp.MatchString(s) {
 			s = quoteSuffixRegexp.FindStringSubmatch(s)[1]
 			sb.WriteString(s)
-			cmds = append(cmds, sb.String())
+			cmdSlice = append(cmdSlice, sb.String())
 			sb.Reset()
 			continue
 		}
-
-		if concatting {
+		// sb 내용물이 있으면 "" or '' 시작~종료 사이 상태이므로 sb에 넣고 아니면 cmdSlice에 넣음
+		if sb.Len() == 0 {
+			cmdSlice = append(cmdSlice, s)
+		} else {
 			sb.WriteString(s)
 			sb.WriteString(" ")
-		} else {
-			cmds = append(cmds, s)
 		}
 	}
-	return cmds
+	return cmdSlice
 }
 
 func addCmdArgs(cmd string, args []string) string {
@@ -58,7 +61,7 @@ func addCmdArgs(cmd string, args []string) string {
 		return strings.Join(args, " ")
 	}
 	for _, arg := range args {
-		// 공백이 arg는 "로 묶어줌
+		// 공백이 포함된 arg는 ""로 묶어줌
 		if strings.Contains(arg, " ") {
 			arg = `"` + arg + `"`
 		}
