@@ -8,6 +8,14 @@ import (
 	"strings"
 )
 
+const appName = "cidr"
+
+var version = "undefined"
+
+func fmtVersion() string {
+	return fmt.Sprintf("%s %s", appName, version)
+}
+
 type IP struct {
 	net.IP
 	inCidr bool
@@ -15,7 +23,13 @@ type IP struct {
 
 func main() {
 	v := flag.Bool("v", false, "Invert match")
+	versionFlag := flag.Bool("version", false, "Version")
 	flag.Parse()
+
+	if *versionFlag {
+		fmt.Println(fmtVersion())
+		return
+	}
 
 	if len(os.Args) < 3 {
 		fmt.Fprintf(os.Stderr, "Usage: %s <IP...> <CIDR...>\n", os.Args[0])
