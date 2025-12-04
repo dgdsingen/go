@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"regexp"
@@ -28,7 +27,7 @@ func fmtVersion() string {
 
 // `ls -l "/some/spaces in path"` 를 ["ls", "-l", "/some/spaces in path"] 로 변경
 func splitCmd(cmd string) (cmdSlice []string) {
-	sb := strings.Builder{}
+	sb := &strings.Builder{}
 	for s := range strings.FieldsSeq(cmd) {
 		// "" or '' 시작 조건
 		if quotePrefixRegexp.MatchString(s) {
@@ -96,14 +95,14 @@ func runCmd(lines []string, wg *sync.WaitGroup) {
 		defer cmdWg.Done()
 		_, err := io.Copy(os.Stdout, stdout)
 		if err != nil && err != io.EOF {
-			log.Printf("%v\n", err)
+			fmt.Printf("%v\n", err)
 		}
 	}()
 	go func() {
 		defer cmdWg.Done()
 		_, err := io.Copy(os.Stderr, stderr)
 		if err != nil && err != io.EOF {
-			log.Printf("%v\n", err)
+			fmt.Printf("%v\n", err)
 		}
 	}()
 	cmdWg.Wait()
@@ -125,9 +124,9 @@ func main() {
 		return
 	}
 
+	// 적용 우선순위: -cmd > flag.Args() > Stdin
+	// 예를 들어 `echo 3 | concurrent -i -cmd="echo 1 {} {}" 2` 실행시 "1 2 3" 출력됨
 	flagArgsCmd := addCmdArgs(*cmd, flag.Args())
-	// fmt.Printf("%v\n", argsCmd)
-
 	if flagArgsCmd == "" && !*useStdin {
 		fmt.Println("use -cmd or -i(stdin)")
 		os.Exit(1)
@@ -141,7 +140,8 @@ func main() {
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
 			if err := scanner.Err(); err != nil {
-				log.Fatalf("%v\n", err)
+				fmt.Printf("%v\n", err)
+				os.Exit(1)
 			}
 
 			line := strings.TrimSpace(scanner.Text())
