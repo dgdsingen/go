@@ -30,8 +30,6 @@ var (
 			return &strings.Builder{}
 		},
 	}
-	mainJobs chan func()
-	subJobs  chan func()
 )
 
 func fmtVersion() string {
@@ -104,7 +102,7 @@ func addCmdCount(cmd string, count int) string {
 	return strings.ReplaceAll(cmd, "{{.Count}}", strconv.Itoa(count))
 }
 
-func runCmd(lines []string) {
+func runCmd(jobs chan<- func(), lines []string) {
 	cmd := exec.Command(lines[0], lines[1:]...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -121,14 +119,14 @@ func runCmd(lines []string) {
 	wg := wgPool.Get().(*sync.WaitGroup)
 	defer wgPool.Put(wg)
 	wg.Add(2)
-	subJobs <- func() {
+	jobs <- func() {
 		defer wg.Done()
 		_, err := io.Copy(os.Stdout, stdout)
 		if err != nil && err != io.EOF {
 			fmt.Printf("%v\n", err)
 		}
 	}
-	subJobs <- func() {
+	jobs <- func() {
 		defer wg.Done()
 		_, err := io.Copy(os.Stderr, stderr)
 		if err != nil && err != io.EOF {
@@ -155,8 +153,8 @@ func main() {
 		return
 	}
 
-	mainJobs = make(chan func(), *workers)
-	subJobs = make(chan func(), *workers*2)
+	mainJobs := make(chan func(), *workers)
+	subJobs := make(chan func(), *workers*2)
 	for range *workers {
 		go worker(mainJobs)
 		go worker(subJobs)
@@ -195,7 +193,7 @@ func main() {
 				wg.Add(1)
 				mainJobs <- func() {
 					defer wg.Done()
-					runCmd(cmdSlice)
+					runCmd(subJobs, cmdSlice)
 				}
 			}
 		}
@@ -206,7 +204,7 @@ func main() {
 			wg.Add(1)
 			mainJobs <- func() {
 				defer wg.Done()
-				runCmd(cmdSlice)
+				runCmd(subJobs, cmdSlice)
 			}
 		}
 	}
