@@ -158,6 +158,7 @@ func main() {
 	for range *workers {
 		go worker(mainJobs)
 		go worker(subJobs)
+		go worker(subJobs)
 	}
 
 	// 적용 우선순위: -cmd > flag.Args() > Stdin
