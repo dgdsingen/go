@@ -98,7 +98,12 @@ tasks:
   build:
     deps:
       - build:r2n
-      - build:gui
+      - task: build:gui
+        vars:
+          # gui에 포함된 github.com/go-vgo/robotgo 라이브러리는 CGO + dynamic linking 필요. static 빌드시 에러남.
+          CGO_ENABLED: 1
+          CLI_ARGS: |-
+            -ldflags "-s -w -X main.version={{.APP_VERSION}}" -tags netgo
       - build:cidr
       - build:concurrent
 
@@ -107,6 +112,9 @@ tasks:
     vars:
       APP_NAME: '{{index .MATCH 0}}'
       APP_VERSION: {sh: "rg '{{.APP_NAME | upper}}_VERSION=(.*)' -r '$1' -o '{{.TASK_DIR}}/.env'"}
+      CGO_ENABLED: '{{.CGO_ENABLED | default "0"}}'
+      CLI_ARGS: |-
+        {{.CLI_ARGS | default "-ldflags \"-s -w -extldflags '-static' -X main.version={{.APP_VERSION}}\" -tags netgo"}}
     sources: ['{{.TASK_DIR}}/cmd/{{.APP_NAME}}/*.go', '{{.TASK_DIR}}/.env']
     generates: ['{{.TASK_DIR}}/bin/{{.APP_NAME}}-*']
     method: timestamp
@@ -114,15 +122,19 @@ tasks:
       - task: go:build:cross
         vars:
           PACKAGE: ./cmd/{{.APP_NAME}}
-          APP_NAME: '{{.APP_NAME}}'
-          APP_VERSION: '{{.APP_VERSION}}'
-          CLI_ARGS: -ldflags "-s -w -extldflags '-static' -X main.version={{.APP_VERSION}}" -tags netgo
+          APP_NAME: {ref: .APP_NAME}
+          APP_VERSION: {ref: .APP_VERSION}
+          CGO_ENABLED: {ref: .CGO_ENABLED}
+          CLI_ARGS: {ref: .CLI_ARGS}
 
   build:*:
     ignore_error: true
     vars:
       APP_NAME: '{{index .MATCH 0}}'
       APP_VERSION: {sh: "rg '{{.APP_NAME | upper}}_VERSION=(.*)' -r '$1' -o '{{.TASK_DIR}}/.env'"}
+      CGO_ENABLED: '{{.CGO_ENABLED | default "0"}}'
+      CLI_ARGS: |-
+        {{.CLI_ARGS | default "-ldflags \"-s -w -extldflags '-static' -X main.version={{.APP_VERSION}}\" -tags netgo"}}
       OUTPUT: '{{.OUTPUT | default (printf "%s/go/bin/%s" .HOME .APP_NAME)}}'
     sources: ['{{.TASK_DIR}}/cmd/{{.APP_NAME}}/*.go', '{{.TASK_DIR}}/.env']
     generates: ['{{.OUTPUT}}']
@@ -131,9 +143,10 @@ tasks:
       - task: go:build
         vars:
           PACKAGE: ./cmd/{{.APP_NAME}}
-          APP_NAME: '{{.APP_NAME}}'
-          APP_VERSION: '{{.APP_VERSION}}'
-          CLI_ARGS: -ldflags "-s -w -extldflags '-static' -X main.version={{.APP_VERSION}}" -tags netgo
+          APP_NAME: {ref: .APP_NAME}
+          APP_VERSION: {ref: .APP_VERSION}
+          CGO_ENABLED: {ref: .CGO_ENABLED}
+          CLI_ARGS: {ref: .CLI_ARGS}
           OUTPUT: {ref: .OUTPUT}
 
   go:build:cross:
@@ -146,6 +159,7 @@ tasks:
           APP_NAME: '{{.APP_NAME | default "app"}}'
           APP_VERSION: '{{.APP_VERSION | default "undefined"}}'
           PACKAGE: '{{.PACKAGE | default "."}}'
+          CGO_ENABLED: '{{.CGO_ENABLED | default "0"}}'
           CLI_ARGS: {ref: .CLI_ARGS}
           OUTPUT: '{{.OUTPUT | default (printf "%s/bin/%s-%s-%s" .TASK_DIR .APP_NAME .ITEM.GOOS .ITEM.GOARCH)}}'
         for:
@@ -161,6 +175,8 @@ tasks:
       APP_NAME: '{{.APP_NAME | default "app"}}'
       APP_VERSION: '{{.APP_VERSION | default "undefined"}}'
       PACKAGE: '{{.PACKAGE | default "."}}'
+      CGO_ENABLED: '{{.CGO_ENABLED | default "0"}}'
+      CLI_ARGS: {ref: .CLI_ARGS}
       OUTPUT: '{{.OUTPUT | default .APP_NAME}}'
     cmds:
       - >-
@@ -176,6 +192,7 @@ tasks:
 
         echo 'go build APP_NAME={{.APP_NAME}} APP_VERSION={{.APP_VERSION}} GOOS={{.GOOS}} GOARCH={{.GOARCH}} PACKAGE={{.PACKAGE}} OUTPUT={{.OUTPUT}}'
 
-        GOOS="{{.GOOS}}"
-        GOARCH="{{.GOARCH}}"
+        CGO_ENABLED='{{.CGO_ENABLED}}'
+        GOOS='{{.GOOS}}'
+        GOARCH='{{.GOARCH}}'
         go build -o {{.OUTPUT}} {{.CLI_ARGS}} {{.PACKAGE}}
