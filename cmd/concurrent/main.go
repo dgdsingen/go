@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -19,15 +20,37 @@ var (
 	version           = "undefined"
 	quotePrefixRegexp = regexp.MustCompile(`^("|')(.*)`)
 	quoteSuffixRegexp = regexp.MustCompile(`(.*)("|')$`)
+	wgPool            = &sync.Pool{
+		New: func() any {
+			return &sync.WaitGroup{}
+		},
+	}
+	sbPool = &sync.Pool{
+		New: func() any {
+			return &strings.Builder{}
+		},
+	}
+	mainJobs chan func()
+	subJobs  chan func()
 )
 
 func fmtVersion() string {
 	return fmt.Sprintf("%s %s", appName, version)
 }
 
+func worker(jobs <-chan func()) {
+	for job := range jobs {
+		job()
+	}
+}
+
 // `ls -l "/some/spaces in path"` 를 ["ls", "-l", "/some/spaces in path"] 로 변경
 func splitCmd(cmd string) (cmdSlice []string) {
-	sb := &strings.Builder{}
+	sb := sbPool.Get().(*strings.Builder)
+	defer func() {
+		sb.Reset()
+		sbPool.Put(sb)
+	}()
 	for s := range strings.FieldsSeq(cmd) {
 		// "" or '' 시작 조건
 		if quotePrefixRegexp.MatchString(s) {
@@ -62,7 +85,15 @@ func addCmdArgs(cmd string, args []string) string {
 	for _, arg := range args {
 		// 공백이 포함된 arg는 ""로 묶어줌
 		if strings.Contains(arg, " ") {
-			arg = `"` + arg + `"`
+			sb := sbPool.Get().(*strings.Builder)
+			defer func() {
+				sb.Reset()
+				sbPool.Put(sb)
+			}()
+			sb.WriteString(`"`)
+			sb.WriteString(arg)
+			sb.WriteString(`"`)
+			arg = sb.String()
 		}
 		cmd = strings.Replace(cmd, "{}", arg, 1)
 	}
@@ -73,9 +104,7 @@ func addCmdCount(cmd string, count int) string {
 	return strings.ReplaceAll(cmd, "{{.Count}}", strconv.Itoa(count))
 }
 
-func runCmd(lines []string, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func runCmd(lines []string) {
 	cmd := exec.Command(lines[0], lines[1:]...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -89,23 +118,24 @@ func runCmd(lines []string, wg *sync.WaitGroup) {
 		panic(err)
 	}
 
-	cmdWg := &sync.WaitGroup{}
-	cmdWg.Add(2)
-	go func() {
-		defer cmdWg.Done()
+	wg := wgPool.Get().(*sync.WaitGroup)
+	defer wgPool.Put(wg)
+	wg.Add(2)
+	subJobs <- func() {
+		defer wg.Done()
 		_, err := io.Copy(os.Stdout, stdout)
 		if err != nil && err != io.EOF {
 			fmt.Printf("%v\n", err)
 		}
-	}()
-	go func() {
-		defer cmdWg.Done()
+	}
+	subJobs <- func() {
+		defer wg.Done()
 		_, err := io.Copy(os.Stderr, stderr)
 		if err != nil && err != io.EOF {
 			fmt.Printf("%v\n", err)
 		}
-	}()
-	cmdWg.Wait()
+	}
+	wg.Wait()
 
 	if err := cmd.Wait(); err != nil {
 		os.Exit(cmd.ProcessState.ExitCode())
@@ -116,12 +146,20 @@ func main() {
 	cmd := flag.String("cmd", "", "Command")
 	count := flag.Int("count", 1, "Count")
 	useStdin := flag.Bool("i", false, "Use stdin")
+	workers := flag.Int("workers", runtime.GOMAXPROCS(0), "Workers")
 	versionFlag := flag.Bool("version", false, "Version")
 	flag.Parse()
 
 	if *versionFlag {
 		fmt.Println(fmtVersion())
 		return
+	}
+
+	mainJobs = make(chan func(), *workers)
+	subJobs = make(chan func(), *workers)
+	for range *workers {
+		go worker(mainJobs)
+		go worker(subJobs)
 	}
 
 	// 적용 우선순위: -cmd > flag.Args() > Stdin
@@ -132,7 +170,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	wg := &sync.WaitGroup{}
+	wg := wgPool.Get().(*sync.WaitGroup)
+	defer wgPool.Put(wg)
 	if *useStdin {
 		// `echo 1 | concurrent -cmd="echo 1"` 실행시 정상이지만
 		// `concurrent -cmd="echo 1"` 실행시 stdin 값이 들어올때까지 기다린다.
@@ -154,7 +193,10 @@ func main() {
 				countCmd := addCmdCount(stdinArgsCmd, cnt)
 				cmdSlice := splitCmd(countCmd)
 				wg.Add(1)
-				go runCmd(cmdSlice, wg)
+				mainJobs <- func() {
+					defer wg.Done()
+					runCmd(cmdSlice)
+				}
 			}
 		}
 	} else {
@@ -162,7 +204,10 @@ func main() {
 			countCmd := addCmdCount(flagArgsCmd, cnt)
 			cmdSlice := splitCmd(countCmd)
 			wg.Add(1)
-			go runCmd(cmdSlice, wg)
+			mainJobs <- func() {
+				defer wg.Done()
+				runCmd(cmdSlice)
+			}
 		}
 	}
 	wg.Wait()
