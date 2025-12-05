@@ -121,6 +121,7 @@ tasks:
             GOARCH: ['arm64', 'amd64']
 
   build:*:
+    prefix: 'build:{{.APP_NAME}}'
     ignore_error: true
     vars:
       GOOS: '{{.GOOS | default .OS}}'
