@@ -7,6 +7,7 @@ dotenv: ['.env', '{{.ENV}}/.env', '{{.HOME}}/.env']
 
 vars:
   OS: '{{any .TERMUX_VERSION | ternary "android" OS}}'
+  TASK_CMD: 'task --output=interleaved'
   FILE_PREFIX: '{{.TASK_DIR}}/.task.'
 
 tasks:
@@ -105,7 +106,6 @@ tasks:
       - build:concurrent
 
   build:cross:*:
-    ignore_error: true
     vars:
       APP_NAME: '{{.APP_NAME | default (index .MATCH 0)}}'
     cmds:
@@ -120,9 +120,26 @@ tasks:
             GOOS: ['darwin', 'linux', 'android']
             GOARCH: ['arm64', 'amd64']
 
+  build:check:*: {}
+
+  build:check:common:
+    cmds:
+      - |
+        {{if and (.GOOS | eq "android") (.GOARCH | eq "amd64")}}
+          echo "android/amd64는 CGO_ENABLED=1을 요구함. 쓸일도 없는데 번거로우니 skip."
+          exit 1
+        {{end}}
+
+  build:check:gui:
+    cmds:
+      - |
+        {{if .GOOS | ne "darwin"}}
+          echo "gui는 darwin에서만 빌드."
+          exit 1
+        {{end}}
+
   build:*:
     prefix: 'build:{{.APP_NAME}}'
-    ignore_error: true
     vars:
       GOOS: '{{.GOOS | default .OS}}'
       GOARCH: '{{.GOARCH | default ARCH}}'
@@ -150,17 +167,25 @@ tasks:
     sources: ['{{.TASK_DIR}}/cmd/{{.APP_NAME}}/*.go', '{{.TASK_DIR}}/.env']
     generates: ['{{.OUTPUT}}']
     method: timestamp
+    # 여러 task 실행중 심각한 에러 발생시 에러가 전파되서 모든 task가 종료되고 (default)
+    # task 별로 사전에 check 로직을 수행해서 조건에 해당하면 task를 에러 없이 단순 skip 하고
+    # check 로직은 task 별로 따로 떼서 관리하는 구조를 갖추고 싶다면?
+    # action task는 ignore_error: false (default) 설정해서 에러가 전파되도록 한다.
+    # check task에서는 skip 조건에 해당하면 exit 1 리턴하며
+    # action task가 그 check task를 task 명령어로 실행해서 exit code를 받아 skip 조건일때 exit 0 처리한다.
+    # 그럼 에러일때는 전파되지만 skip 일때는 에러 없이 조용히 종료된다.
+    # 또한 check task를 .APP_NAME 값으로 매핑하면 task 별로 구분된 구조를 가지게 된다.
+    # 다만 check task에 vars 전달이 필요하고 task 프로세스를 또 띄우니 메모리를 좀 더 쓰긴하나 약소함 (약 24MB)
+    # (task에 vars 전달해야 하는 제약은 task 분리시 피할 수 없음. 이게 싫으면 task 안에 check 로직 다 때려넣어야함)
+    # 아래는 대안으로 찾아봤던 다른 방식들.
+    # preconditions: [] 사용시 skip 조건이 되었을때 에러가 나버려서 모든 task가 종료되버림.
+    # status: [] 사용시 조건을 거꾸로 써야해서 헷갈리고, sources도 무력화되버림.
+    # ignore_error: true 설정시 에러가 전파되지 않아 다른 task들이 무의미하게 수행될수 있음.
+    # 명령어 말고 task 단위 분리 호출시 task 간에 값을 넘길수가 없어서 file로 써야함.
     cmds:
-      - >-
-        {{/* android/amd64는 CGO_ENABLED=1을 요구함. 쓸일도 없는데 번거로우니 skip */}}
-        {{if and (.GOOS | eq "android") (.GOARCH | eq "amd64")}}
-          exit
-        {{end}}
-
-        {{/* gui는 darwin에서만 빌드 */}}
-        {{if and (.APP_NAME | eq "gui") (.GOOS | ne "darwin")}}
-          exit
-        {{end}}
+      - |-
+        {{.TASK_CMD}} build:check:common GOOS='{{.GOOS}}' GOARCH='{{.GOARCH}}' 2>/dev/null || exit 0
+        {{.TASK_CMD}} build:check:{{.APP_NAME}} GOOS='{{.GOOS}}' 2>/dev/null || exit 0
 
         echo 'go build APP_NAME={{.APP_NAME}} APP_VERSION={{.APP_VERSION}} GOOS={{.GOOS}} GOARCH={{.GOARCH}} PACKAGE={{.PACKAGE}} OUTPUT={{.OUTPUT}}'
 
