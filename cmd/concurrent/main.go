@@ -20,12 +20,12 @@ var (
 	version           = "undefined"
 	quotePrefixRegexp = regexp.MustCompile(`^("|')(.*)`)
 	quoteSuffixRegexp = regexp.MustCompile(`(.*)("|')$`)
-	wgPool            = &sync.Pool{
+	wgPool            = sync.Pool{
 		New: func() any {
 			return &sync.WaitGroup{}
 		},
 	}
-	sbPool = &sync.Pool{
+	sbPool = sync.Pool{
 		New: func() any {
 			return &strings.Builder{}
 		},
