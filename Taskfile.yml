@@ -103,7 +103,7 @@ tasks:
       - {task: build:gui, vars: {CGO_ENABLED: 1}}
         # gui에 포함된 github.com/go-vgo/robotgo 라이브러리는 CGO + dynamic linking 필요. static 빌드시 에러남.
       - build:cidr
-      - build:concurrent
+      # - build:concurrent
 
   build:cross:*:
     vars:
