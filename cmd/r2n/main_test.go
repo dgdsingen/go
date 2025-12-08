@@ -131,17 +131,17 @@ func BenchmarkMixedLinesParseReplaceSplit(b *testing.B) {
 	parse(dst, mixedLines(), &ReplaceSplitParser{}, prefix)
 }
 
-func BenchmarkShortLinesParseScanner(b *testing.B) {
-	parseScanner(dst, shortLines(), prefix)
-}
-
-func BenchmarkLongLinesParseScanner(b *testing.B) {
-	parseScanner(dst, longLines(), prefix)
-}
-
-func BenchmarkMixedLinesParseScanner(b *testing.B) {
-	parseScanner(dst, mixedLines(), prefix)
-}
+// func BenchmarkShortLinesParseScanner(b *testing.B) {
+// 	parseScanner(dst, shortLines(), prefix)
+// }
+//
+// func BenchmarkLongLinesParseScanner(b *testing.B) {
+// 	parseScanner(dst, longLines(), prefix)
+// }
+//
+// func BenchmarkMixedLinesParseScanner(b *testing.B) {
+// 	parseScanner(dst, mixedLines(), prefix)
+// }
 
 // r2n -prefix="[sh] " -stdio=stdout -- sh -c 'yes 1 | tr -d "\n" | head -c 100000'
 // 과 같이 테스트 해봤는데 항상 4096B 에서 잘리는 것을 확인.
