@@ -10,4 +10,5 @@ var bn = byte('\n')
 
 var bsr = []byte{br}
 var bsn = []byte{bn}
-var bsnn = []byte{bn, bn}
+
+// var bsnn = []byte{bn, bn}

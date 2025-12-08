@@ -56,18 +56,16 @@ func main() {
 		}
 	}
 
-	ipSliceLen := len(ipSlice)
-	if ipSliceLen == 0 {
+	if len(ipSlice) == 0 {
 		fmt.Fprintf(os.Stderr, "No IP.\n")
 	}
 
-	cidrSliceLen := len(cidrSlice)
-	if cidrSliceLen == 0 {
+	if len(cidrSlice) == 0 {
 		fmt.Fprintf(os.Stderr, "No CIDR.\n")
 	}
 
-	for i := range ipSliceLen {
-		for j := range cidrSliceLen {
+	for i := range ipSlice {
+		for j := range cidrSlice {
 			if cidrSlice[j].Contains(ipSlice[i].IP) {
 				ipSlice[i].inCidr = true
 			}
@@ -75,7 +73,7 @@ func main() {
 	}
 
 	result := []string{}
-	for i := range ipSliceLen {
+	for i := range ipSlice {
 		if ipSlice[i].inCidr != *v {
 			result = append(result, ipSlice[i].String())
 		}

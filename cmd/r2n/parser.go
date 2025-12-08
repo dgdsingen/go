@@ -58,7 +58,7 @@ func (p SliceParser) Prep(bs []byte) []byte {
 	return bs
 }
 func (p SliceParser) Parse(bs []byte) (before, after []byte, found bool) {
-	for i := 0; i < len(bs); i++ {
+	for i := range bs {
 		if bs[i] == '\r' || bs[i] == '\n' {
 			return bs[:i], bs[i+1:], true
 		}

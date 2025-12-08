@@ -80,20 +80,20 @@ func addCmdArgs(cmd string, args []string) string {
 	if cmd == "" {
 		return strings.Join(args, " ")
 	}
-	for _, arg := range args {
+	for i := range args {
 		// 공백이 포함된 arg는 ""로 묶어줌
-		if strings.Contains(arg, " ") {
+		if strings.Contains(args[i], " ") {
 			sb := sbPool.Get().(*strings.Builder)
 			defer func() {
 				sb.Reset()
 				sbPool.Put(sb)
 			}()
 			sb.WriteString(`"`)
-			sb.WriteString(arg)
+			sb.WriteString(args[i])
 			sb.WriteString(`"`)
-			arg = sb.String()
+			args[i] = sb.String()
 		}
-		cmd = strings.Replace(cmd, "{}", arg, 1)
+		cmd = strings.Replace(cmd, "{}", args[i], 1)
 	}
 	return cmd
 }
