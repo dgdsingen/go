@@ -52,7 +52,7 @@ func main() {
 		panic(err)
 	}
 
-	wg := &sync.WaitGroup{}
+	wg := sync.WaitGroup{}
 	run := func(f func()) {
 		wg.Add(1)
 		go func() {
@@ -60,7 +60,7 @@ func main() {
 			f()
 		}()
 	}
-	parser := &IndexByteParser{}
+	parser := IndexByteParser{}
 
 	switch *stdio {
 	case "all":

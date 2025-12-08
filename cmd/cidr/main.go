@@ -36,7 +36,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ipSlice := []*IP{}
+	ipSlice := []IP{}
 	cidrSlice := []*net.IPNet{}
 	for _, arg := range flag.Args() {
 		if strings.Contains(arg, "/") {
@@ -52,30 +52,32 @@ func main() {
 				fmt.Fprintf(os.Stderr, "Invalid IP: %s\n", arg)
 				os.Exit(1)
 			}
-			ipSlice = append(ipSlice, &IP{IP: ip})
+			ipSlice = append(ipSlice, IP{IP: ip})
 		}
 	}
 
-	if len(ipSlice) == 0 {
+	ipSliceLen := len(ipSlice)
+	if ipSliceLen == 0 {
 		fmt.Fprintf(os.Stderr, "No IP.\n")
 	}
 
-	if len(cidrSlice) == 0 {
+	cidrSliceLen := len(cidrSlice)
+	if cidrSliceLen == 0 {
 		fmt.Fprintf(os.Stderr, "No CIDR.\n")
 	}
 
-	for _, ip := range ipSlice {
-		for _, cidr := range cidrSlice {
-			if cidr.Contains(ip.IP) {
-				ip.inCidr = true
+	for i := range ipSliceLen {
+		for j := range cidrSliceLen {
+			if cidrSlice[j].Contains(ipSlice[i].IP) {
+				ipSlice[i].inCidr = true
 			}
 		}
 	}
 
 	result := []string{}
-	for _, ip := range ipSlice {
-		if ip.inCidr != *v {
-			result = append(result, ip.String())
+	for i := range ipSliceLen {
+		if ipSlice[i].inCidr != *v {
+			result = append(result, ipSlice[i].String())
 		}
 	}
 	if len(result) == 0 {
