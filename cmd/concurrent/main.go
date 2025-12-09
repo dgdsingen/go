@@ -169,8 +169,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	wg := wgPool.Get().(*sync.WaitGroup)
-	defer wgPool.Put(wg)
+	wg := sync.WaitGroup{}
 	if *useStdin {
 		// `echo 1 | concurrent -cmd="echo 1"` 실행시 정상이지만
 		// `concurrent -cmd="echo 1"` 실행시 stdin 값이 들어올때까지 기다린다.

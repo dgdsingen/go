@@ -60,14 +60,13 @@ func main() {
 	if len(ipSlice) == 0 {
 		fmt.Fprintf(os.Stderr, "No IP.\n")
 	}
-
 	if len(cidrSlice) == 0 {
 		fmt.Fprintf(os.Stderr, "No CIDR.\n")
 	}
 
 	for i := range ipSlice {
-		for j := range cidrSlice {
-			if cidrSlice[j].Contains(ipSlice[i].IP) {
+		for c := range cidrSlice {
+			if cidrSlice[c].Contains(ipSlice[i].IP) {
 				ipSlice[i].inCidr = true
 			}
 		}
