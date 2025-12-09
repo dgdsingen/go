@@ -12,10 +12,10 @@ type Parser interface {
 
 type IndexByteParser struct{}
 
-func (p IndexByteParser) Prep(bs []byte) []byte {
+func (p *IndexByteParser) Prep(bs []byte) []byte {
 	return bs
 }
-func (p IndexByteParser) Parse(bs []byte) (before, after []byte, found bool) {
+func (p *IndexByteParser) Parse(bs []byte) (before, after []byte, found bool) {
 	// '\r', '\n' 둘 다 검색
 	indexR := bytes.IndexByte(bs, br)
 	indexN := bytes.IndexByte(bs, bn)
@@ -36,10 +36,10 @@ func (p IndexByteParser) Parse(bs []byte) (before, after []byte, found bool) {
 
 type CutsParser struct{}
 
-func (p CutsParser) Prep(bs []byte) []byte {
+func (p *CutsParser) Prep(bs []byte) []byte {
 	return bs
 }
-func (p CutsParser) Parse(bs []byte) (before, after []byte, found bool) {
+func (p *CutsParser) Parse(bs []byte) (before, after []byte, found bool) {
 	beforeR, afterR, foundR := bytes.Cut(bs, bsr)
 	beforeN, afterN, foundN := bytes.Cut(bs, bsn)
 	if !foundR && !foundN {
@@ -54,10 +54,10 @@ func (p CutsParser) Parse(bs []byte) (before, after []byte, found bool) {
 
 type SliceParser struct{}
 
-func (p SliceParser) Prep(bs []byte) []byte {
+func (p *SliceParser) Prep(bs []byte) []byte {
 	return bs
 }
-func (p SliceParser) Parse(bs []byte) (before, after []byte, found bool) {
+func (p *SliceParser) Parse(bs []byte) (before, after []byte, found bool) {
 	for i := range bs {
 		if bs[i] == '\r' || bs[i] == '\n' {
 			return bs[:i], bs[i+1:], true
@@ -68,10 +68,10 @@ func (p SliceParser) Parse(bs []byte) (before, after []byte, found bool) {
 
 type IndexAnyParser struct{}
 
-func (p IndexAnyParser) Prep(bs []byte) []byte {
+func (p *IndexAnyParser) Prep(bs []byte) []byte {
 	return bs
 }
-func (p IndexAnyParser) Parse(bs []byte) (before, after []byte, found bool) {
+func (p *IndexAnyParser) Parse(bs []byte) (before, after []byte, found bool) {
 	index := bytes.IndexAny(bs, "\r\n")
 	if index == -1 {
 		return before, after, false
@@ -81,12 +81,12 @@ func (p IndexAnyParser) Parse(bs []byte) (before, after []byte, found bool) {
 
 type ReplaceCutParser struct{}
 
-func (p ReplaceCutParser) Prep(bs []byte) []byte {
+func (p *ReplaceCutParser) Prep(bs []byte) []byte {
 	return bytes.ReplaceAll(bs, bsr, bsn)
 	// 의도된 '\n\n' 도 치환되버릴수 있음
 	// bs = bytes.ReplaceAll(chunk, bnn, bn)
 }
-func (p ReplaceCutParser) Parse(bs []byte) (before, after []byte, found bool) {
+func (p *ReplaceCutParser) Parse(bs []byte) (before, after []byte, found bool) {
 	return bytes.Cut(bs, bsn)
 }
 

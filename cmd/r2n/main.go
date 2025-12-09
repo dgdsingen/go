@@ -53,14 +53,15 @@ func main() {
 	}
 
 	wg := sync.WaitGroup{}
-	run := func(f func()) {
+	run := func(fn func()) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			f()
+			fn()
 		}()
 	}
-	parser := IndexByteParser{}
+
+	var parser Parser = &IndexByteParser{}
 
 	switch *stdio {
 	case "all":
