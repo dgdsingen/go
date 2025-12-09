@@ -24,14 +24,16 @@ func main() {
 	cmd := os.Args[0]
 	args := flag.Args()
 	if len(args) == 0 {
-		usage := strings.Join([]string{
-			fmtVersion(), "",
-			"Usage:",
-			"  " + cmd + " <command> [args...]",
-			"  " + cmd + " -stdio=stdout -- <command> [args...]",
-			"  " + cmd + ` -prefix="[curl] " -- <command> [args...]`,
-			"",
-		}, "\n")
+		template := "{{version}}\n\n" +
+			"Usage:\n" +
+			"  {{cmd}} <command> [args...]\n" +
+			"  {{cmd}} -stdio=stdout -- <command> [args...]\n" +
+			"  {{cmd}} -prefix='[curl] ' -- <command> [args...]\n"
+		r := strings.NewReplacer(
+			"{{version}}", fmtVersion(),
+			"{{cmd}}", cmd,
+		)
+		usage := r.Replace(template)
 		fmt.Fprint(os.Stderr, usage)
 		os.Exit(1)
 		return
