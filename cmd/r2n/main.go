@@ -61,26 +61,24 @@ func main() {
 		}()
 	}
 
-	// var parser Parser = &IndexByteParser{} 선언시
-	// `go build -gcflags='-m' ./cmd/r2n` > "&IndexByteParser{} escapes to heap"
-	// parser := IndexByteParser{} 선언시에는 안뜨는걸로 봐서 stack 할당인듯.
-	parser := IndexByteParser{}
+	var parser Parser = &IndexByteParser{}
+	// parser := IndexByteParser{}
 
 	switch *stdio {
 	case "all":
-		run(func() { parse(os.Stdout, stdout, &parser, *prefix) })
-		run(func() { parse(os.Stderr, stderr, &parser, *prefix) })
+		run(func() { parse(os.Stdout, stdout, parser, *prefix) })
+		run(func() { parse(os.Stderr, stderr, parser, *prefix) })
 	case "stdout":
-		run(func() { parse(os.Stdout, stdout, &parser, *prefix) })
+		run(func() { parse(os.Stdout, stdout, parser, *prefix) })
 		run(func() { io.Copy(os.Stderr, stderr) })
 	case "stderr":
 		run(func() { io.Copy(os.Stdout, stdout) })
-		run(func() { parse(os.Stderr, stderr, &parser, *prefix) })
+		run(func() { parse(os.Stderr, stderr, parser, *prefix) })
 	default:
 		// stdout은 변환 없이 그대로 전달 (pipe 전달시 데이터 내용이 바뀌면 안됨)
 		run(func() { io.Copy(os.Stdout, stdout) })
 		// stderr는 변환 후 전달 (curl의 progress bar 출력용)
-		run(func() { parse(os.Stderr, stderr, &parser, *prefix) })
+		run(func() { parse(os.Stderr, stderr, parser, *prefix) })
 	}
 
 	wg.Wait()
