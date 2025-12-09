@@ -114,8 +114,8 @@ func (p *ReplaceSplitParser) Parse(bs []byte) (before, after []byte, found bool)
 
 func parse(dst io.Writer, src io.Reader, p Parser, prefix string) {
 	buf := make([]byte, 4096)
-	stream := &bytes.Buffer{}
-	line := &bytes.Buffer{}
+	stream := bytes.Buffer{}
+	line := bytes.Buffer{}
 	bprefix := []byte(prefix)
 
 	for {
@@ -135,7 +135,7 @@ func parse(dst io.Writer, src io.Reader, p Parser, prefix string) {
 				// if len(before) > 0 {
 				// 	dst.Write(concatBytes(line, bprefix, before, bsn))
 				// }
-				dst.Write(concatBytes(line, bprefix, before, bsn))
+				dst.Write(concatBytes(&line, bprefix, before, bsn))
 				sBytes = after
 			}
 
@@ -147,7 +147,7 @@ func parse(dst io.Writer, src io.Reader, p Parser, prefix string) {
 
 			// chunk가 '\r' or '\n' 없이 계속 들어올때 out 무한 증가하지 않게 강제로 라인 Write
 			if stream.Len() > maxLineLength {
-				dst.Write(concatBytes(line, bprefix, stream.Bytes(), bsn))
+				dst.Write(concatBytes(&line, bprefix, stream.Bytes(), bsn))
 				stream.Reset()
 			}
 		}
@@ -155,7 +155,7 @@ func parse(dst io.Writer, src io.Reader, p Parser, prefix string) {
 		if err != nil {
 			// '\n' 없이 끝난 경우 강제로 라인 Write
 			if stream.Len() > 0 {
-				dst.Write(concatBytes(line, bprefix, stream.Bytes(), bsn))
+				dst.Write(concatBytes(&line, bprefix, stream.Bytes(), bsn))
 			}
 			break
 		}

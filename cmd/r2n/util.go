@@ -29,8 +29,8 @@ func fmtVersion() string {
 func concatBytes(line *bytes.Buffer, bs ...[]byte) []byte {
 	// system call을 줄이기 위해 라인 단위로 버퍼링해서 출력. 이게 bufio.Writer 보다 빠름
 	defer line.Reset()
-	for _, b := range bs {
-		line.Write(b)
+	for i := range bs {
+		line.Write(bs[i])
 	}
 	return line.Bytes()
 }

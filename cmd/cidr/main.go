@@ -36,20 +36,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	ipSlice := []IP{}
-	cidrSlice := []*net.IPNet{}
-	for _, arg := range flag.Args() {
-		if strings.Contains(arg, "/") {
-			_, cidr, err := net.ParseCIDR(arg)
+	args := flag.Args()
+	ipSlice := make([]IP, 0, 1)
+	cidrSlice := make([]*net.IPNet, 0, 1)
+	for i := range args {
+		if strings.Contains(args[i], "/") {
+			_, cidr, err := net.ParseCIDR(args[i])
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Invalid CIDR: %s\n", arg)
+				fmt.Fprintf(os.Stderr, "Invalid CIDR: %s\n", args[i])
 				os.Exit(1)
 			}
 			cidrSlice = append(cidrSlice, cidr)
 		} else {
-			ip := net.ParseIP(arg)
+			ip := net.ParseIP(args[i])
 			if ip == nil {
-				fmt.Fprintf(os.Stderr, "Invalid IP: %s\n", arg)
+				fmt.Fprintf(os.Stderr, "Invalid IP: %s\n", args[i])
 				os.Exit(1)
 			}
 			ipSlice = append(ipSlice, IP{IP: ip})
@@ -72,7 +73,7 @@ func main() {
 		}
 	}
 
-	result := []string{}
+	result := make([]string, 0)
 	for i := range ipSlice {
 		if ipSlice[i].inCidr != *v {
 			result = append(result, ipSlice[i].String())
