@@ -72,7 +72,7 @@ func main() {
 		}
 	}
 
-	result := make([]string, 0)
+	result := make([]string, 0, 1)
 	for i := range ipSlice {
 		if ipSlice[i].inCidr != *v {
 			result = append(result, ipSlice[i].String())
