@@ -182,8 +182,8 @@ func main() {
 		timer = time.NewTimer(SecToDuration(*totalSec))
 	}
 
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	for {
 		select {
@@ -191,8 +191,8 @@ func main() {
 			robotgo.MoveRelative(randPoint(), randPoint())
 			ticker.Reset(SecToDuration(StepSec()))
 		case <-timer.C:
-			done <- syscall.SIGTERM
-		case <-done:
+			sigChan <- syscall.SIGTERM
+		case <-sigChan:
 			exitProcess(pidFilePath)
 		}
 	}
