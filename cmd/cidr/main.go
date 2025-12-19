@@ -58,10 +58,10 @@ func main() {
 	}
 
 	if len(ipSlice) == 0 {
-		fmt.Fprintf(os.Stderr, "No IP.\n")
+		fmt.Fprintf(os.Stderr, "No IP\n")
 	}
 	if len(cidrSlice) == 0 {
-		fmt.Fprintf(os.Stderr, "No CIDR.\n")
+		fmt.Fprintf(os.Stderr, "No CIDR\n")
 	}
 
 	for i := range ipSlice {
