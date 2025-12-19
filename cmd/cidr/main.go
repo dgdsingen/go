@@ -32,7 +32,7 @@ func main() {
 	}
 
 	if len(os.Args) < 3 {
-		fmt.Fprintf(os.Stderr, "Usage: %s <IP...> <CIDR...>\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s <ip...> <cidr...>\n", os.Args[0])
 		os.Exit(1)
 	}
 
@@ -43,14 +43,14 @@ func main() {
 		if strings.Contains(args[i], "/") {
 			_, cidr, err := net.ParseCIDR(args[i])
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Invalid CIDR: %s\n", args[i])
+				fmt.Fprintf(os.Stderr, "invalid cidr: %s\n", args[i])
 				os.Exit(1)
 			}
 			cidrSlice = append(cidrSlice, cidr)
 		} else {
 			ip := net.ParseIP(args[i])
 			if ip == nil {
-				fmt.Fprintf(os.Stderr, "Invalid IP: %s\n", args[i])
+				fmt.Fprintf(os.Stderr, "invalid ip: %s\n", args[i])
 				os.Exit(1)
 			}
 			ipSlice = append(ipSlice, IP{IP: ip})
@@ -58,10 +58,12 @@ func main() {
 	}
 
 	if len(ipSlice) == 0 {
-		fmt.Fprintf(os.Stderr, "No IP\n")
+		fmt.Fprintf(os.Stderr, "no ip\n")
+		return
 	}
 	if len(cidrSlice) == 0 {
-		fmt.Fprintf(os.Stderr, "No CIDR\n")
+		fmt.Fprintf(os.Stderr, "no cidr\n")
+		return
 	}
 
 	for i := range ipSlice {
@@ -79,7 +81,7 @@ func main() {
 		}
 	}
 	if len(result) == 0 {
-		result = append(result, "No result.")
+		result = append(result, "no result")
 	}
 	fmt.Println(strings.Join(result, "\n"))
 }
