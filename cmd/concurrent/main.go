@@ -165,7 +165,7 @@ func main() {
 	// 예를 들어 `echo 3 | concurrent -i -cmd="echo 1 {} {}" 2` 실행시 "1 2 3" 출력됨
 	flagArgsCmd := addCmdArgs(*cmd, flag.Args())
 	if flagArgsCmd == "" && !*useStdin {
-		fmt.Println("use -cmd or -i(stdin)")
+		fmt.Println("Use -cmd or -i(stdin)")
 		os.Exit(1)
 	}
 
