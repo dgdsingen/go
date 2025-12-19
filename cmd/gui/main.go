@@ -40,13 +40,13 @@ func RandPointGen(points []int) func() int {
 // func hasProcess(procName string) bool {
 // 	processes, err := process.Processes()
 // 	if err != nil {
-// 		fmt.Printf("error processes: %v\n", err)
+// 		fmt.Printf("%v\n", err)
 // 	}
 //
 // 	for _, proc := range processes {
 // 		name, err := proc.Name()
 // 		if err != nil {
-// 			// fmt.Printf("error proc cmd: %v %v\n", cmd, err)
+// 			// fmt.Printf("%v\n", err)
 // 			continue
 // 		}
 // 		if proc.Pid != int32(pid) && name == procName {
@@ -60,7 +60,7 @@ func RandPointGen(points []int) func() int {
 func PidFilePath() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Printf("os.UserHomeDir(): %v\n", err)
+		fmt.Printf("%v\n", err)
 	}
 	return home + "/.gui.pid"
 }
@@ -79,11 +79,11 @@ func readPidFile(pidFilePath string) (pid int) {
 
 	data, err := os.ReadFile(pidFilePath)
 	if err != nil {
-		fmt.Printf("os.ReadFile(): %v\n", err)
+		fmt.Printf("%v\n", err)
 	}
 	pid, err = strconv.Atoi(string(data))
 	if err != nil {
-		fmt.Printf("Atoi(): %v\n", err)
+		fmt.Printf("%v\n", err)
 	}
 	return pid
 }
@@ -91,21 +91,21 @@ func readPidFile(pidFilePath string) (pid int) {
 func writePidFile(pidFilePath string, pid int) {
 	err := os.WriteFile(pidFilePath, []byte(strconv.Itoa(pid)), 0644)
 	if err != nil {
-		fmt.Printf("os.WriteFile(): %v\n", err)
+		fmt.Printf("%v\n", err)
 	}
 }
 
 func deletePidFile(pidFilePath string) {
 	err := os.Remove(pidFilePath)
 	if err != nil {
-		fmt.Printf("os.Remove(): %v\n", err)
+		fmt.Printf("%v\n", err)
 	}
 }
 
 func Process(pid int) *os.Process {
 	proc, err := os.FindProcess(pid)
 	if err != nil {
-		fmt.Printf("os.FindProcess(): %v\n", err)
+		fmt.Printf("%v\n", err)
 		return nil
 	}
 	return proc
@@ -157,12 +157,12 @@ func main() {
 			cmd := exec.Command("gui", "-on", "-total-sec", strconv.Itoa(*totalSec))
 			err := cmd.Start()
 			if err != nil {
-				fmt.Printf("cmd.Start(): %v\n", err)
+				fmt.Printf("%v\n", err)
 			}
 		case "off":
 			err := proc.Signal(syscall.SIGTERM)
 			if err != nil {
-				fmt.Printf("proc.Signal(): %v\n", err)
+				fmt.Printf("%v\n", err)
 			}
 		default:
 			fmt.Printf("gui (PID=%d) (exists=%v).\n", pid, existsProc)
