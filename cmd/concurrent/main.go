@@ -153,8 +153,8 @@ func main() {
 		return
 	}
 
-	mainJobs := make(chan func(), *workers)
-	subJobs := make(chan func(), *workers*2)
+	mainJobs := make(chan func())
+	subJobs := make(chan func())
 	for range *workers {
 		go worker(mainJobs)
 		go worker(subJobs)
