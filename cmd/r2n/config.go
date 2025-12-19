@@ -1,6 +1,6 @@
 package main
 
-const maxLineLength = 64 * 1024 // 64KB
+const maxLineLength = 64 << 10 // 64KB
 const appName = "r2n"
 
 var version = "undefined"
