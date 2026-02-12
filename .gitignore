@@ -3,3 +3,7 @@ bin/
 .task.*
 *.prof
 *.test
+
+# ai
+.claude/
+.qwen/
