@@ -4,6 +4,9 @@ bin/
 *.prof
 *.test
 
+# etc
+.obsidian/
+
 # ai
 .claude/
 .qwen/
