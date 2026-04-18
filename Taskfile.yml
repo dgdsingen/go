@@ -3,12 +3,17 @@ version: '3'
 output: prefixed
 silent: true
 
-dotenv: ['.env', '{{.ENV}}/.env', '{{.HOME}}/.env']
-
 vars:
   OS: '{{any .TERMUX_VERSION | ternary "android" OS}}'
   TASK_CMD: 'task --output=interleaved'
   FILE_PREFIX: '{{.TASK_DIR}}/.task.'
+  GH_API_VERSION: '2022-11-28'
+  VERSIONS:
+    map:
+      r2n: 'v0.2.5'
+      gui: 'v0.0.2'
+      cidr: 'v0.0.2'
+      concurrent: 'v0.1.0'
 
 tasks:
   bench:
@@ -51,7 +56,7 @@ tasks:
     deps: [release:r2n]
 
   release:r2n:
-    sources: ['{{.TASK_DIR}}/.env']
+    sources: ['{{.TASKFILE}}']
     method: timestamp
     cmds:
       - defer: rm -f "{{.FILE_PREFIX}}{{.TASK}}"
@@ -65,7 +70,7 @@ tasks:
       - >-
         curl -sL -X POST
         "https://api.github.com/repos/{{.REPO}}/releases"
-        -H "Authorization: Bearer {{.GH_API_TOKEN}}"
+        -H "Authorization: Bearer $(gopass cat me/gh/apitoken)"
         -H "X-GitHub-Api-Version: {{.GH_API_VERSION}}"
         -H "Accept: application/vnd.github+json"
         -d '{
@@ -90,7 +95,7 @@ tasks:
           {{$name := regexReplaceAll ".*/" .ITEM ""}}
           curl -sL -X POST
           "https://uploads.github.com/repos/{{.REPO}}/releases/{{.RELEASE_ID}}/assets?name={{$name}}"
-          -H "Authorization: Bearer {{.GH_API_TOKEN}}"
+          -H "Authorization: Bearer $(gopass cat me/gh/apitoken)"
           -H "X-GitHub-Api-Version: {{.GH_API_VERSION}}"
           -H "Accept: application/vnd.github+json"
           -H "Content-Type: application/octet-stream"
@@ -144,13 +149,7 @@ tasks:
       GOOS: '{{.GOOS | default .OS}}'
       GOARCH: '{{.GOARCH | default ARCH}}'
       APP_NAME: '{{.APP_NAME | default (index .MATCH 0)}}'
-      APP_VERSION:
-        sh: |-
-          {{if .APP_VERSION | any}}
-            echo -n "{{.APP_VERSION}}"
-          {{else}}
-            rg '{{.APP_NAME | upper}}_VERSION=(.*)' -r '$1' -o '{{.TASK_DIR}}/.env' || echo 'undefined'
-          {{end}}
+      APP_VERSION: '{{.APP_VERSION | default (get .VERSIONS .APP_NAME)}}'
       PACKAGE: '{{.PACKAGE | default (printf "./cmd/%s" .APP_NAME)}}'
       CGO_ENABLED: '{{.CGO_ENABLED | default "0"}}'
       BUILD_FLAGS: |-
@@ -164,7 +163,7 @@ tasks:
           {{end}}
         {{end}}
       OUTPUT: '{{.OUTPUT | default (printf "%s/go/bin/%s" .HOME .APP_NAME)}}'
-    sources: ['{{.TASK_DIR}}/cmd/{{.APP_NAME}}/*.go', '{{.TASK_DIR}}/.env']
+    sources: ['{{.TASK_DIR}}/cmd/{{.APP_NAME}}/*.go', '{{.TASKFILE}}']
     generates: ['{{.OUTPUT}}']
     method: timestamp
     # 여러 task 실행중 심각한 에러 발생시 에러가 전파되서 모든 task가 종료되고 (default)
