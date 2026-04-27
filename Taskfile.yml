@@ -157,9 +157,9 @@ tasks:
           {{.BUILD_FLAGS}}
         {{else}}
           {{if .CGO_ENABLED | toString | eq "1"}}
-            -tags netgo -ldflags "-s -w -X main.version={{.APP_VERSION}}"
+            -trimpath -tags netgo -ldflags "-s -w -X main.version={{.APP_VERSION}}"
           {{else}}
-            -tags netgo -ldflags "-s -w -X main.version={{.APP_VERSION}} -extldflags '-static'"
+            -trimpath -tags netgo -ldflags "-s -w -X main.version={{.APP_VERSION}} -extldflags '-static'"
           {{end}}
         {{end}}
       OUTPUT: '{{.OUTPUT | default (printf "%s/go/bin/%s" .HOME .APP_NAME)}}'
