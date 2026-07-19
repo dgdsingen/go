@@ -56,7 +56,10 @@ tasks:
     deps: [release:r2n]
 
   release:r2n:
-    sources: ['{{.TASK_DIR}}/cmd/r2n/*.go', '{{.TASKFILE}}']
+    sources:
+      - '{{.TASKFILE}}'
+      - '{{.TASK_DIR}}/go.*'
+      - '{{.TASK_DIR}}/cmd/r2n/*.go'
     # method: timestamp
     cmds:
       - defer: rm -f "{{.FILE_PREFIX}}{{.TASK}}"
@@ -163,7 +166,10 @@ tasks:
           {{end}}
         {{end}}
       OUTPUT: '{{.OUTPUT | default (printf "%s/go/bin/%s" .HOME .APP_NAME)}}'
-    sources: ['{{.TASK_DIR}}/cmd/{{.APP_NAME}}/*.go', '{{.TASKFILE}}']
+    sources:
+      - '{{.TASKFILE}}'
+      - '{{.TASK_DIR}}/go.*'
+      - '{{.TASK_DIR}}/cmd/{{.APP_NAME}}/*.go'
     generates: ['{{.OUTPUT}}']
     # method: timestamp
     # 여러 task 실행중 심각한 에러 발생시 에러가 전파되서 모든 task가 종료되고 (default)
