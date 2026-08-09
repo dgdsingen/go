@@ -10,7 +10,7 @@ import (
 
 // Benchmark 결과:
 //   Replace 시리즈는 할당과 리소스 사용률이 너무 높아 의미가 없어서 순위 밖으로 빼버림.
-//   bytes.IndexByte(), bytes.Cuts() 성능/리소스 비율이 평균적으로 가장 좋다.
+//   성능/리소스 비율이 평균적으로 가장 좋은건 WindowParser > IndexByteParser 순.
 //   최대한 표준 라이브러리를 쓰자. slice 재할당은 성능과 메모리에 치명적이다.
 //
 // BenchmarkParse/Short/Discard/IndexByte-18         	     883	   1223357 ns/op	6857.08 MB/s	  262128 B/op	      15 allocs/op
