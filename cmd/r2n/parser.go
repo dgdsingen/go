@@ -16,22 +16,70 @@ func (p *IndexByteParser) Prep(bs []byte) []byte {
 	return bs
 }
 func (p *IndexByteParser) Parse(bs []byte) (before, after []byte, found bool) {
-	// '\r', '\n' 둘 다 검색
-	indexR := bytes.IndexByte(bs, br)
+	// '\r', '\n' 을 각각 전체 검색하면 한쪽이 없는 스트림에서 라인마다 남은 버퍼를
+	// 끝까지 헛스캔한다(청크 안에서 O(n^2)). 첫 구분자가 '\r' 이라면 반드시 '\n' 보다
+	// 앞에 있으므로, '\n' 을 먼저 찾고 '\r' 탐색을 그 앞 구간으로 제한해도 결과는 같다.
+	//
+	// 단 '\r' 만 나오는 스트림(curl progress)은 '\n' 탐색이 여전히 전체를 훑는다.
+	// 양쪽을 모두 없애려면 창 단위로 두 구분자를 함께 찾아야 한다.
 	indexN := bytes.IndexByte(bs, bn)
-	if indexR == -1 && indexN == -1 {
-		return before, after, false
+	if indexN == -1 {
+		indexR := bytes.IndexByte(bs, br)
+		if indexR == -1 {
+			return before, after, false
+		}
+		return bs[:indexR], bs[indexR+1:], true
 	}
-	index := indexR
-	if indexR == -1 || (indexN > -1 && indexN < indexR) {
-		index = indexN
-	}
+
 	// 의도된 '\n\n' 은 그대로 출력하고, '\r\n' or '\n\r'은 '\n' 으로 치환해서 불필요한 줄바꿈 보정
+	if indexR := bytes.IndexByte(bs[:indexN], br); indexR != -1 {
+		cnt := 1
+		if indexR+1 == indexN { // "\r\n"
+			cnt = 2
+		}
+		return bs[:indexR], bs[indexR+cnt:], true
+	}
+
 	cnt := 1
-	if indexR != -1 && indexN != -1 && (indexR-indexN == 1 || indexR-indexN == -1) {
+	if indexN+1 < len(bs) && bs[indexN+1] == br { // "\n\r"
 		cnt = 2
 	}
-	return bs[:index], bs[index+cnt:], true
+	return bs[:indexN], bs[indexN+cnt:], true
+}
+
+// IndexByteParser는 '\r' 로만 끝나는 스트림(curl progress)에서 라인마다 '\n' 을 버퍼 끝까지 헛스캔한다.
+// WindowParser는 일정 크기 창 안에서 두 구분자를 함께 찾아 헛스캔을 창 하나로 묶는다.
+// 대신 라인이 아주 길면 창 단위 반복이 SIMD 한 번보다 불리하다.
+type WindowParser struct{}
+
+func (p *WindowParser) Prep(bs []byte) []byte {
+	return bs
+}
+func (p *WindowParser) Parse(bs []byte) (before, after []byte, found bool) {
+	for start := 0; start < len(bs); start += scanWindowLength {
+		seg := bs[start:min(start+scanWindowLength, len(bs))]
+		indexR := bytes.IndexByte(seg, br)
+		indexN := bytes.IndexByte(seg, bn)
+		if indexR == -1 && indexN == -1 {
+			continue
+		}
+		i := indexR
+		if indexR == -1 || (indexN != -1 && indexN < indexR) {
+			i = indexN
+		}
+		index := start + i
+
+		// 의도된 '\n\n' 은 그대로 출력하고, '\r\n' or '\n\r'은 '\n' 으로 치환해서 불필요한 줄바꿈 보정
+		cnt := 1
+		if index+1 < len(bs) {
+			next := bs[index+1]
+			if (next == br || next == bn) && next != bs[index] {
+				cnt = 2
+			}
+		}
+		return bs[:index], bs[index+cnt:], true
+	}
+	return before, after, false
 }
 
 type CutsParser struct{}
@@ -113,9 +161,9 @@ func (p *ReplaceSplitParser) Parse(bs []byte) (before, after []byte, found bool)
 }
 
 func parse(dst io.Writer, src io.Reader, p Parser, prefix string) {
-	buf := make([]byte, 4096)
+	buf := make([]byte, readBufLength)
 	stream := bytes.Buffer{}
-	line := bytes.Buffer{}
+	out := bytes.Buffer{}
 	bprefix := []byte(prefix)
 
 	for {
@@ -133,9 +181,9 @@ func parse(dst io.Writer, src io.Reader, p Parser, prefix string) {
 				}
 				// // 추가시 의도된 '\n\n'도 치환되버림
 				// if len(before) > 0 {
-				// 	dst.Write(concatBytes(line, bprefix, before, bsn))
+				// 	writeLine(&out, bprefix, before)
 				// }
-				dst.Write(concatBytes(&line, bprefix, before, bsn))
+				writeLine(&out, bprefix, before)
 				sBytes = after
 			}
 
@@ -145,18 +193,21 @@ func parse(dst io.Writer, src io.Reader, p Parser, prefix string) {
 				stream.Write(sBytes)
 			}
 
-			// chunk가 '\r' or '\n' 없이 계속 들어올때 out 무한 증가하지 않게 강제로 라인 Write
+			// chunk가 '\r' or '\n' 없이 계속 들어올때 stream 무한 증가하지 않게 강제로 라인 Write
 			if stream.Len() > maxLineLength {
-				dst.Write(concatBytes(&line, bprefix, stream.Bytes(), bsn))
+				writeLine(&out, bprefix, stream.Bytes())
 				stream.Reset()
 			}
+
+			flushLines(dst, &out)
 		}
 
 		if err != nil {
 			// '\n' 없이 끝난 경우 강제로 라인 Write
 			if stream.Len() > 0 {
-				dst.Write(concatBytes(&line, bprefix, stream.Bytes(), bsn))
+				writeLine(&out, bprefix, stream.Bytes())
 			}
+			flushLines(dst, &out)
 			break
 		}
 	}

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 )
 
 func fmtVersion() string {
@@ -26,11 +27,16 @@ func fmtVersion() string {
 // 	return bs[:p]
 // }
 
-func concatBytes(line *bytes.Buffer, bs ...[]byte) []byte {
-	// system call을 줄이기 위해 라인 단위로 버퍼링해서 출력. 이게 bufio.Writer 보다 빠름
-	defer line.Reset()
-	for i := range bs {
-		line.Write(bs[i])
+func writeLine(out *bytes.Buffer, prefix, line []byte) {
+	out.Write(prefix)
+	out.Write(line)
+	out.WriteByte(bn)
+}
+
+func flushLines(dst io.Writer, out *bytes.Buffer) {
+	if out.Len() == 0 {
+		return
 	}
-	return line.Bytes()
+	dst.Write(out.Bytes())
+	out.Reset()
 }

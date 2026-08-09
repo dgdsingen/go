@@ -10,7 +10,7 @@ vars:
   GH_API_VERSION: '2022-11-28'
   VERSIONS:
     map:
-      r2n: 'v0.2.5'
+      r2n: 'v0.3.0'
       gui: 'v0.0.2'
       cidr: 'v0.0.2'
       concurrent: 'v0.1.0'
@@ -23,13 +23,7 @@ tasks:
     deps: [build]
     interactive: true
     cmds:
-      - |
-        # go test ./cmd/r2n -run=^$ -bench=. -benchmem -cpuprofile=cpu.prof -memprofile=mem.prof |
-        go test ./cmd/r2n -run=^$ -bench=. -benchmem |
-          rg 'Benchmark|allocs/op' |
-          rg '\[prefix\].*' -r '' --passthru |
-          rg '\n(\s*[0-9].*)' -r '$1' -U --passthru |
-          sort
+      - go test ./cmd/r2n -run=^$ -bench=. -benchmem
 
   test:
     deps: [test:r2n]
@@ -41,7 +35,6 @@ tasks:
       CMD: bash -c "echo -e '\r1\r2\n3\n4\r5\r\n6\n\r7\r\r8\n\n9\n'"
       # CMD: bash -c "echo -e '1\r2\r3' | pv -L 2 1>&2"
     cmds:
-      - defer: rm -f 1.txt
       - '{{.CMD}}'
       - '{{.R2N}} -prefix="[prefix] " {{.CMD}}'
       - '{{.R2N}} -stdio=stdout -- {{.CMD}}'
@@ -50,12 +43,15 @@ tasks:
       - '{{.R2N}} -- {{.CMD}}'
       - '{{.R2N}} {{.CMD}}'
       # long-line test: len(out) > maxLineLength 이면 강제로 \n 넣어서 라인 write + flush
-      - go test -v ./cmd/r2n > 1.txt; rg '\[prefix\] ' 1.txt -c
+      # - defer: rm -f 1.txt
+      # - go test -v ./cmd/r2n > 1.txt; rg '\[prefix\] ' 1.txt -c
 
   release:
     deps: [release:r2n]
 
   release:r2n:
+    vars:
+      VERSION: '{{ get .VERSIONS "r2n" }}'
     sources:
       - '{{.TASKFILE}}'
       - '{{.TASK_DIR}}/go.*'
@@ -64,7 +60,7 @@ tasks:
     cmds:
       - defer: rm -f "{{.FILE_PREFIX}}{{.TASK}}"
       - task: github:release
-        vars: {TASK: {ref: .TASK}, REPO: dgdsingen/go, TAG_NAME: '{{.R2N_VERSION}}', NAME: 'r2n {{.R2N_VERSION}}'}
+        vars: {TASK: {ref: .TASK}, REPO: dgdsingen/go, TAG_NAME: '{{.VERSION}}', NAME: 'r2n {{.VERSION}}'}
       - task: github:release:asset
         vars: {TASK: {ref: .TASK}, REPO: dgdsingen/go, FILE: r2n-.*}
 
@@ -95,7 +91,7 @@ tasks:
     cmds:
       - for: {var: FILES}
         cmd: >-
-          {{$name := regexReplaceAll ".*/" .ITEM ""}}
+          {{ $name := regexReplaceAll ".*/" .ITEM "" }}
           curl -sL -X POST
           "https://uploads.github.com/repos/{{.REPO}}/releases/{{.RELEASE_ID}}/assets?name={{$name}}"
           -H "Authorization: Bearer $(gopass cat me/gh/token)"

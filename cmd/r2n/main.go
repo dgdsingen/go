@@ -55,8 +55,7 @@ func main() {
 	}
 
 	wg := sync.WaitGroup{}
-	var parser Parser = &IndexByteParser{}
-	// parser := IndexByteParser{}
+	var parser Parser = &WindowParser{}
 
 	switch *stdio {
 	case "all":
