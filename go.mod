@@ -1,6 +1,6 @@
 module github.com/dgdsingen/go
 
-go 1.25.7
+go 1.26.7
 
 require github.com/go-vgo/robotgo v1.0.2
 
