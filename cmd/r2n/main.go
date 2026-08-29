@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"os/exec"
 	"strings"
@@ -63,13 +64,28 @@ func main() {
 		wg.Go(func() { parse(os.Stderr, stderr, parser, *prefix) })
 	case "stdout":
 		wg.Go(func() { parse(os.Stdout, stdout, parser, *prefix) })
-		wg.Go(func() { io.Copy(os.Stderr, stderr) })
+		wg.Go(func() {
+			n, err := io.Copy(os.Stderr, stderr)
+			if err != nil {
+				slog.Error(err.Error(), slog.Int64("n", n))
+			}
+		})
 	case "stderr":
-		wg.Go(func() { io.Copy(os.Stdout, stdout) })
+		wg.Go(func() {
+			n, err := io.Copy(os.Stdout, stdout)
+			if err != nil {
+				slog.Error(err.Error(), slog.Int64("n", n))
+			}
+		})
 		wg.Go(func() { parse(os.Stderr, stderr, parser, *prefix) })
 	default:
 		// stdout은 변환 없이 그대로 전달 (pipe 전달시 데이터 내용이 바뀌면 안됨)
-		wg.Go(func() { io.Copy(os.Stdout, stdout) })
+		wg.Go(func() {
+			n, err := io.Copy(os.Stdout, stdout)
+			if err != nil {
+				slog.Error(err.Error(), slog.Int64("n", n))
+			}
+		})
 		// stderr는 변환 후 전달 (curl의 progress bar 출력용)
 		wg.Go(func() { parse(os.Stderr, stderr, parser, *prefix) })
 	}

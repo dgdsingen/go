@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"io"
+	"log/slog"
 	"os"
 	"strings"
 	"testing"
@@ -140,7 +141,12 @@ func openDevNull(tb testing.TB) io.Writer {
 	if err != nil {
 		tb.Fatal(err)
 	}
-	tb.Cleanup(func() { f.Close() })
+	tb.Cleanup(func() {
+		err = f.Close()
+		if err != nil {
+			slog.Error(err.Error())
+		}
+	})
 	return f
 }
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log/slog"
 )
 
 func fmtVersion() string {
@@ -37,6 +38,9 @@ func flushLines(dst io.Writer, out *bytes.Buffer) {
 	if out.Len() == 0 {
 		return
 	}
-	dst.Write(out.Bytes())
+	n, err := dst.Write(out.Bytes())
+	if err != nil {
+		slog.Error(err.Error(), slog.Int("n", n))
+	}
 	out.Reset()
 }
