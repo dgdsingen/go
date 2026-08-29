@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/netip"
 	"os"
 	"strings"
@@ -113,10 +114,16 @@ func WriteMatched(w io.Writer, ips []IP, invert bool) error {
 		}
 		found = true
 		buf = append(ips[i].AppendTo(buf[:0]), '\n')
-		bw.Write(buf)
+		n, err := bw.Write(buf)
+		if err != nil {
+			slog.Error(err.Error(), slog.Int("n", n))
+		}
 	}
 	if !found {
-		bw.WriteString("No result.\n")
+		n, err := bw.WriteString("No result.\n")
+		if err != nil {
+			slog.Error(err.Error(), slog.Int("n", n))
+		}
 	}
 	return bw.Flush()
 }
@@ -141,7 +148,7 @@ func main() {
 
 		ips, prefixes, err := SplitPrefixAddr(flag.Args())
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s\n", err)
+			slog.Error(err.Error())
 			os.Exit(1)
 		}
 		if len(prefixes) == 0 {
@@ -156,7 +163,7 @@ func main() {
 		}
 
 		if err := ListAddrs(os.Stdout, prefixes); err != nil {
-			fmt.Fprintf(os.Stderr, "%s\n", err)
+			slog.Error(err.Error())
 			os.Exit(1)
 		}
 		return
@@ -169,7 +176,7 @@ func main() {
 
 	ips, prefixes, err := SplitPrefixAddr(flag.Args())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", err)
+		slog.Error(err.Error())
 		os.Exit(1)
 	}
 	if len(ips) == 0 {
@@ -184,7 +191,7 @@ func main() {
 	MatchIPs(ips, prefixes)
 
 	if err := WriteMatched(os.Stdout, ips, *v); err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", err)
+		slog.Error(err.Error())
 		os.Exit(1)
 	}
 }
