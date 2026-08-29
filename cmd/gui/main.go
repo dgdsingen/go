@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -40,13 +41,13 @@ func RandPointGen(points []int) func() int {
 // func hasProcess(procName string) bool {
 // 	processes, err := process.Processes()
 // 	if err != nil {
-// 		fmt.Printf("%v\n", err)
+// 		slog.Error(err.Error())
 // 	}
 //
 // 	for _, proc := range processes {
 // 		name, err := proc.Name()
 // 		if err != nil {
-// 			// fmt.Printf("%v\n", err)
+// 			// slog.Error(err.Error())
 // 			continue
 // 		}
 // 		if proc.Pid != int32(pid) && name == procName {
@@ -60,7 +61,7 @@ func RandPointGen(points []int) func() int {
 func PidFilePath() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		slog.Error(err.Error())
 	}
 	return home + "/.gui.pid"
 }
@@ -79,11 +80,11 @@ func readPidFile(pidFilePath string) (pid int) {
 
 	data, err := os.ReadFile(pidFilePath)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		slog.Error(err.Error())
 	}
 	pid, err = strconv.Atoi(string(data))
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		slog.Error(err.Error())
 	}
 	return pid
 }
@@ -91,21 +92,21 @@ func readPidFile(pidFilePath string) (pid int) {
 func writePidFile(pidFilePath string, pid int) {
 	err := os.WriteFile(pidFilePath, []byte(strconv.Itoa(pid)), 0644)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		slog.Error(err.Error())
 	}
 }
 
 func deletePidFile(pidFilePath string) {
 	err := os.Remove(pidFilePath)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		slog.Error(err.Error())
 	}
 }
 
 func Process(pid int) *os.Process {
 	proc, err := os.FindProcess(pid)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		slog.Error(err.Error())
 		return nil
 	}
 	return proc
@@ -157,12 +158,12 @@ func main() {
 			cmd := exec.Command("gui", "-on", "-total-sec", strconv.Itoa(*totalSec))
 			err := cmd.Start()
 			if err != nil {
-				fmt.Printf("%v\n", err)
+				slog.Error(err.Error())
 			}
 		case "off":
 			err := proc.Signal(syscall.SIGTERM)
 			if err != nil {
-				fmt.Printf("%v\n", err)
+				slog.Error(err.Error())
 			}
 		default:
 			fmt.Printf("gui (PID=%d) (exists=%v).\n", pid, existsProc)

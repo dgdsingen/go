@@ -11,7 +11,7 @@ vars:
   VERSIONS:
     map:
       r2n: 'v0.3.1'
-      gui: 'v0.0.2'
+      gui: 'v0.0.3'
       cidr: 'v0.1.0'
       concurrent: 'v0.1.0'
 
