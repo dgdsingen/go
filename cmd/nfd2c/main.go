@@ -8,49 +8,22 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-)
 
-// 한글 음절 조합 상수: Unicode UAX #15, Hangul Syllable Composition
-const (
-	lBase, vBase, tBase = 0x1100, 0x1161, 0x11A7
-	sBase               = 0xAC00
-	lCount, vCount      = 19, 21
-	tCount              = 28
-	nCount              = vCount * tCount // 588
+	"golang.org/x/text/unicode/norm"
 )
-
-// 분해된 한글 자모(L+V[+T])를 완성형 음절로 결합하고, 기타 문자는 그대로 통과
-func toNFC(s string) string {
-	r := []rune(s)
-	out := make([]rune, 0, len(r))
-	for i := 0; i < len(r); i++ {
-		var l, v rune
-		l, v = r[i]-lBase, rune(-1)
-		if l < 0 || l >= lCount || i+1 >= len(r) {
-			out = append(out, r[i])
-			continue
-		}
-		if v = r[i+1] - vBase; v < 0 || v >= vCount {
-			out = append(out, r[i])
-			continue
-		}
-		syl, t := sBase+(l*vCount+v)*tCount, rune(0)
-		i++
-		if i+1 < len(r) {
-			if x := r[i+1] - tBase; x > 0 && x < tCount {
-				t, i = x, i+1
-			}
-		}
-		out = append(out, syl+t)
-	}
-	return string(out)
-}
 
 var (
+	appName        = "nfd2c"
+	version        = "undefined"
+	versionFlag    = flag.Bool("version", false, "Version")
 	dryRun         = flag.Bool("n", false, "dry-run")
 	quiet          = flag.Bool("q", false, "quiet")
 	fixed, skipped int
 )
+
+func fmtVersion() string {
+	return fmt.Sprintf("%s %s", appName, version)
+}
 
 // 정규화 비민감 파일시스템에서 두 경로가 같은 실체인지 봄
 func sameEntry(a, b string) bool {
@@ -76,7 +49,7 @@ func rename(src, dst string) error {
 }
 
 func fix(parent, name string) {
-	nfc := toNFC(name)
+	nfc := norm.NFC.String(name)
 	if nfc == name {
 		return
 	}
@@ -121,6 +94,12 @@ func walk(dir string) {
 
 func main() {
 	flag.Parse()
+
+	if *versionFlag {
+		fmt.Println(fmtVersion())
+		return
+	}
+
 	target := "."
 	if flag.NArg() > 0 {
 		target = flag.Arg(0)
