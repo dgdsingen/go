@@ -17,7 +17,6 @@ var (
 	version        = "undefined"
 	versionFlag    = flag.Bool("version", false, "Version")
 	dryRun         = flag.Bool("n", false, "dry-run")
-	quiet          = flag.Bool("q", false, "quiet")
 	showAll        = flag.Bool("a", false, "show all")
 	fixed, skipped int
 )
@@ -43,7 +42,6 @@ func rename(src, dst string) error {
 		tmp = fmt.Sprintf("%s.nfd2c-tmp%d", dst, i)
 	}
 	if err := os.Rename(src, tmp); err != nil {
-		slog.Error(err.Error())
 		return err
 	}
 	return os.Rename(tmp, dst)
@@ -52,24 +50,22 @@ func rename(src, dst string) error {
 func fix(parent, name string) {
 	nfc := norm.NFC.String(name)
 	if nfc == name {
-		if *showAll && !*quiet {
+		if *showAll {
 			fmt.Printf("%s\n", filepath.Join(parent, name))
 		}
 		return
 	}
 	src, dst := filepath.Join(parent, name), filepath.Join(parent, nfc)
 	if _, err := os.Lstat(dst); err == nil && !sameEntry(src, dst) {
-		fmt.Fprintf(os.Stderr, "충돌, 건너뜀: %s\n", dst)
+		slog.Error(err.Error(), slog.String("dst", dst))
 		skipped++
 		return
 	}
-	if !*quiet {
-		prefix := ""
-		if *dryRun {
-			prefix = "[dry] "
-		}
-		fmt.Printf("%s%s > %s\n", prefix, src, dst)
+	prefix := ""
+	if *dryRun {
+		prefix = "[dry] "
 	}
+	fmt.Printf("%s%s > %s\n", prefix, src, dst)
 	if !*dryRun {
 		if err := rename(src, dst); err != nil {
 			slog.Error(err.Error(), slog.String("src", src))
@@ -117,13 +113,11 @@ func main() {
 	walk(root)
 	fix(filepath.Dir(root), filepath.Base(root)) // root dir
 
-	if !*quiet {
-		fmt.Printf("\n%d개 정규화", fixed)
-		if skipped > 0 {
-			fmt.Printf(", %d개 건너뜀", skipped)
-		}
-		fmt.Println()
+	fmt.Printf("\n%d개 정규화", fixed)
+	if skipped > 0 {
+		fmt.Printf(", %d개 건너뜀", skipped)
 	}
+	fmt.Println()
 	if skipped > 0 {
 		os.Exit(1)
 	}
