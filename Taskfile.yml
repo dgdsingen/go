@@ -14,6 +14,7 @@ vars:
       gui: 'v0.0.3'
       cidr: 'v0.1.1'
       concurrent: 'v0.1.0'
+      nfd2c: 'v0.0.1'
 
 tasks:
   bench:
@@ -105,6 +106,7 @@ tasks:
       - build:r2n
       - build:cidr
       - {task: build:gui, vars: {CGO_ENABLED: 1}}
+      - build:nfd2c
         # gui에 포함된 github.com/go-vgo/robotgo 라이브러리는 CGO + dynamic linking 필요. static 빌드시 에러남.
       # - build:cross:r2n
       # - build:concurrent
