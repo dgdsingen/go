@@ -18,6 +18,7 @@ var (
 	versionFlag    = flag.Bool("version", false, "Version")
 	dryRun         = flag.Bool("n", false, "dry-run")
 	quiet          = flag.Bool("q", false, "quiet")
+	showAll        = flag.Bool("a", false, "show all")
 	fixed, skipped int
 )
 
@@ -51,6 +52,9 @@ func rename(src, dst string) error {
 func fix(parent, name string) {
 	nfc := norm.NFC.String(name)
 	if nfc == name {
+		if *showAll && !*quiet {
+			fmt.Printf("%s\n", filepath.Join(parent, name))
+		}
 		return
 	}
 	src, dst := filepath.Join(parent, name), filepath.Join(parent, nfc)
