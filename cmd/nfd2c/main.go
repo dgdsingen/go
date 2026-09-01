@@ -4,6 +4,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,7 +24,8 @@ func toNFC(s string) string {
 	r := []rune(s)
 	out := make([]rune, 0, len(r))
 	for i := 0; i < len(r); i++ {
-		l, v := r[i]-lBase, rune(-1)
+		var l, v rune
+		l, v = r[i]-lBase, rune(-1)
 		if l < 0 || l >= lCount || i+1 >= len(r) {
 			out = append(out, r[i])
 			continue
@@ -67,6 +69,7 @@ func rename(src, dst string) error {
 		tmp = fmt.Sprintf("%s.nfd2c-tmp%d", dst, i)
 	}
 	if err := os.Rename(src, tmp); err != nil {
+		slog.Error(err.Error())
 		return err
 	}
 	return os.Rename(tmp, dst)
@@ -92,7 +95,7 @@ func fix(parent, name string) {
 	}
 	if !*dryRun {
 		if err := rename(src, dst); err != nil {
-			fmt.Fprintf(os.Stderr, "실패 %s: %v\n", src, err)
+			slog.Error(err.Error(), slog.String("src", src))
 			skipped++
 			return
 		}
@@ -104,7 +107,7 @@ func fix(parent, name string) {
 func walk(dir string) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "읽기 실패 %s: %v\n", dir, err)
+		slog.Error(err.Error(), slog.String("dir", dir))
 		skipped++
 		return
 	}
@@ -124,7 +127,7 @@ func main() {
 	}
 	root, err := filepath.Abs(strings.TrimRight(target, string(os.PathSeparator)))
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		slog.Error(err.Error())
 		os.Exit(2)
 	}
 
