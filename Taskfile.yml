@@ -14,7 +14,7 @@ vars:
       gui: 'v0.0.3'
       cidr: 'v0.1.1'
       concurrent: 'v0.1.0'
-      nfd2c: 'v0.3.3'
+      nfd2c: 'v0.3.4'
 
 tasks:
   bench:

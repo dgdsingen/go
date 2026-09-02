@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -92,31 +91,32 @@ func fix(parent, name string, printWp *WorkerPool) {
 		skipped.Add(1)
 		return
 	}
-	prefix := ""
 	if *dryRun {
-		prefix = "[dry] "
+		printWp.work <- func() {
+			fmt.Printf("[dry] %s > %s\n", src, dst)
+		}
+		fixed.Add(1)
+		return
+	}
+	if err := rename(src, dst); err != nil {
+		slog.Error(err.Error(), slog.String("src", src))
+		skipped.Add(1)
+		return
 	}
 	printWp.work <- func() {
-		fmt.Printf("%s%s > %s\n", prefix, src, dst)
-	}
-	if !*dryRun {
-		if err := rename(src, dst); err != nil {
-			slog.Error(err.Error(), slog.String("src", src))
-			skipped.Add(1)
-			return
-		}
+		fmt.Printf("%s > %s\n", src, dst)
 	}
 	fixed.Add(1)
 }
 
 // 자식 먼저 처리 후 자신을 처리 (bottom-up)
-func walk(dir string, dirWp, fileWp, printWp *WorkerPool) *sync.WaitGroup {
+func walk(dir string, dirWp, fileWp, printWp *WorkerPool) (*sync.WaitGroup, bool) {
 	var wg sync.WaitGroup
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		slog.Error(err.Error(), slog.String("dir", dir))
 		skipped.Add(1)
-		return &wg
+		return &wg, false
 	}
 	for _, e := range entries {
 		name := e.Name()
@@ -128,14 +128,16 @@ func walk(dir string, dirWp, fileWp, printWp *WorkerPool) *sync.WaitGroup {
 			}
 			continue
 		}
-		sub := walk(filepath.Join(dir, name), dirWp, fileWp, printWp)
-		// 하위 dir rename은 이미 큐에 먼저 들어갔으니, 남은 조건은 이 dir 바로 아래 file 뿐
+		sub, ok := walk(filepath.Join(dir, name), dirWp, fileWp, printWp)
+		if !ok {
+			continue
+		}
 		dirWp.work <- func() {
 			sub.Wait()
 			fix(dir, name, printWp)
 		}
 	}
-	return &wg
+	return &wg, true
 }
 
 func main() {
@@ -155,20 +157,25 @@ func main() {
 			fmt.Println()
 		}
 
-		root, err := filepath.Abs(strings.TrimRight(target, string(os.PathSeparator)))
+		root, err := filepath.Abs(target)
 		if err != nil {
 			slog.Error(err.Error(), slog.String("target", target))
 			continue
 		}
 		fmt.Printf("# %s\n", root)
 
+		fixed.Store(0)
+		skipped.Store(0)
+
 		fileWp := NewWorkerPool(*jobs)
 		dirWp := NewWorkerPool(1)
 		printWp := NewWorkerPool(1)
-		walk(root, dirWp, fileWp, printWp).Wait()
+		_, ok := walk(root, dirWp, fileWp, printWp)
 		fileWp.Close()
 		dirWp.Close()
-		fix(filepath.Dir(root), filepath.Base(root), printWp)
+		if ok {
+			fix(filepath.Dir(root), filepath.Base(root), printWp)
+		}
 		printWp.Close()
 
 		fmt.Printf("Fix: %d, Skip: %d\n", fixed.Load(), skipped.Load())
