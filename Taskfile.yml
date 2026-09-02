@@ -58,6 +58,8 @@ tasks:
       - '{{.TASK_DIR}}/go.*'
       - '{{.TASK_DIR}}/cmd/r2n/*.go'
     # method: timestamp
+    deps:
+      - task: build:cross:r2n
     cmds:
       - defer: rm -f "{{.FILE_PREFIX}}{{.TASK}}"
       - task: github:release
