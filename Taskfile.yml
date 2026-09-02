@@ -10,7 +10,7 @@ vars:
   GH_API_VERSION: '2022-11-28'
   VERSIONS:
     map:
-      r2n: 'v0.3.2'
+      r2n: 'v0.3.3'
       gui: 'v0.0.3'
       cidr: 'v0.1.1'
       concurrent: 'v0.1.0'
