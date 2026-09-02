@@ -162,13 +162,13 @@ func main() {
 		}
 		fmt.Printf("# %s\n", root)
 
-		printWp := NewWorkerPool(1)
-		dirWp := NewWorkerPool(1)
 		fileWp := NewWorkerPool(*jobs)
-		walk(root, dirWp, fileWp, printWp)
-		fix(filepath.Dir(root), filepath.Base(root), printWp)
-		dirWp.Close()
+		dirWp := NewWorkerPool(1)
+		printWp := NewWorkerPool(1)
+		walk(root, dirWp, fileWp, printWp).Wait()
 		fileWp.Close()
+		dirWp.Close()
+		fix(filepath.Dir(root), filepath.Base(root), printWp)
 		printWp.Close()
 
 		fmt.Printf("Fix: %d, Skip: %d\n", fixed.Load(), skipped.Load())
