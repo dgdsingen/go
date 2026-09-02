@@ -114,14 +114,10 @@ func main() {
 	walk(root)
 	// fix(filepath.Dir(root), filepath.Base(root)) // root dir
 
-	if fixed > 0 {
-		fmt.Println()
-	}
-	fmt.Printf("Fix: %d", fixed)
+	fmt.Printf("Fix: %d\n", fixed)
 	if skipped > 0 {
-		fmt.Printf(", Skip: %d", skipped)
+		fmt.Printf("Skip: %d\n", skipped)
 	}
-	fmt.Println()
 	if skipped > 0 {
 		os.Exit(1)
 	}
