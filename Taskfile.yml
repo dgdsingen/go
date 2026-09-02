@@ -10,7 +10,7 @@ vars:
   GH_API_VERSION: '2022-11-28'
   VERSIONS:
     map:
-      r2n: 'v0.3.4'
+      r2n: 'v0.3.5'
       gui: 'v0.0.3'
       cidr: 'v0.1.1'
       concurrent: 'v0.1.0'
@@ -186,11 +186,18 @@ tasks:
     # ignore_error: true 설정시 에러가 전파되지 않아 다른 task들이 무의미하게 수행될수 있음.
     # 명령어 말고 task 단위 분리 호출시 task 간에 값을 넘길수가 없어서 file로 써야함.
     cmds:
-      - |-
+      - >-
         {{.TASK_CMD}} build:check:common GOOS='{{.GOOS}}' GOARCH='{{.GOARCH}}' 2>/dev/null || exit 0
+
         {{.TASK_CMD}} build:check:{{.APP_NAME}} GOOS='{{.GOOS}}' 2>/dev/null || exit 0
 
-        echo 'go build APP_NAME={{.APP_NAME}} APP_VERSION={{.APP_VERSION}} GOOS={{.GOOS}} GOARCH={{.GOARCH}} PACKAGE={{.PACKAGE}} OUTPUT={{.OUTPUT}}'
+        echo 'go build
+        APP_NAME={{.APP_NAME}}
+        APP_VERSION={{.APP_VERSION}}
+        GOOS={{.GOOS}}
+        GOARCH={{.GOARCH}}
+        PACKAGE={{.PACKAGE}}
+        OUTPUT={{.OUTPUT}}'
 
         CGO_ENABLED='{{.CGO_ENABLED}}'
         GOOS='{{.GOOS}}'
