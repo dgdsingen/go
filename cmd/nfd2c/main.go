@@ -165,6 +165,7 @@ func main() {
 		}
 		fmt.Printf("# %s\n", root)
 
+		count.Store(0)
 		fixed.Store(0)
 		skipped.Store(0)
 
