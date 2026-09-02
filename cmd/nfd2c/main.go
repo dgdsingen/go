@@ -146,28 +146,30 @@ func main() {
 		return
 	}
 
-	target := "."
+	targets := []string{"."}
 	if flag.NArg() > 0 {
-		target = flag.Arg(0)
+		targets = flag.Args()
 	}
-	root, err := filepath.Abs(strings.TrimRight(target, string(os.PathSeparator)))
-	if err != nil {
-		slog.Error(err.Error())
-		os.Exit(2)
-	}
-	fmt.Printf("nfd2c: %s\n", root)
+	for i, target := range targets {
+		if i > 0 {
+			fmt.Println()
+		}
 
-	printWp := NewWorkerPool(1)
-	dirWp := NewWorkerPool(1)
-	fileWp := NewWorkerPool(*jobs)
-	walk(root, dirWp, fileWp, printWp)
-	dirWp.Close()
-	fileWp.Close()
-	printWp.Close()
+		root, err := filepath.Abs(strings.TrimRight(target, string(os.PathSeparator)))
+		if err != nil {
+			slog.Error(err.Error(), slog.String("target", target))
+			continue
+		}
+		fmt.Printf("# %s\n", root)
 
-	fmt.Printf("Fix: %d\n", fixed.Load())
-	if n := skipped.Load(); n > 0 {
-		fmt.Printf("Skip: %d\n", n)
-		os.Exit(1)
+		printWp := NewWorkerPool(1)
+		dirWp := NewWorkerPool(1)
+		fileWp := NewWorkerPool(*jobs)
+		walk(root, dirWp, fileWp, printWp)
+		dirWp.Close()
+		fileWp.Close()
+		printWp.Close()
+
+		fmt.Printf("Fix: %d, Skip: %d\n", fixed.Load(), skipped.Load())
 	}
 }
