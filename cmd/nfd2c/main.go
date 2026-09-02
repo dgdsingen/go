@@ -116,6 +116,7 @@ func walk(dir string, dirWp, fileWp, printWp *WorkerPool) (*sync.WaitGroup, bool
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		slog.Error(err.Error(), slog.String("dir", dir))
+		count.Add(1)
 		skipped.Add(1)
 		return &wg, false
 	}
