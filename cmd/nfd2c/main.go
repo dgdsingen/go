@@ -72,7 +72,11 @@ func rename(src, dst string) error {
 	if err := os.Rename(src, tmp); err != nil {
 		return err
 	}
-	return os.Rename(tmp, dst)
+	if err := os.Rename(tmp, dst); err != nil {
+		_ = os.Rename(tmp, src) // rollback
+		return err
+	}
+	return nil
 }
 
 func fix(parent, name string, printWp *WorkerPool) {
@@ -155,14 +159,19 @@ func main() {
 		targets = flag.Args()
 	}
 	for i, target := range targets {
-		if i > 0 {
-			fmt.Println()
-		}
-
 		root, err := filepath.Abs(target)
 		if err != nil {
 			slog.Error(err.Error(), slog.String("target", target))
 			continue
+		}
+		rootFi, err := os.Lstat(root)
+		if err != nil {
+			slog.Error(err.Error(), slog.String("target", target))
+			continue
+		}
+
+		if i > 0 {
+			fmt.Println()
 		}
 		fmt.Printf("# %s\n", root)
 
@@ -173,7 +182,11 @@ func main() {
 		fileWp := NewWorkerPool(*jobs)
 		dirWp := NewWorkerPool(1)
 		printWp := NewWorkerPool(1)
-		_, ok := walk(root, dirWp, fileWp, printWp)
+
+		ok := true
+		if rootFi.IsDir() {
+			_, ok = walk(root, dirWp, fileWp, printWp)
+		}
 		fileWp.Close()
 		dirWp.Close()
 		if ok {
