@@ -112,7 +112,7 @@ func main() {
 	fmt.Printf("nfd2c: %s\n", root)
 
 	walk(root)
-	fix(filepath.Dir(root), filepath.Base(root)) // root dir
+	// fix(filepath.Dir(root), filepath.Base(root)) // root dir
 
 	if fixed > 0 {
 		fmt.Println()
