@@ -18,8 +18,8 @@ var (
 	appName = "nfd2c"
 	version = "undefined"
 
-	tmpSuffix      = fmt.Sprintf(".%s-tmp", appName)
-	fixed, skipped atomic.Int64
+	tmpSuffix             = fmt.Sprintf(".%s-tmp", appName)
+	count, fixed, skipped atomic.Int64
 
 	versionFlag = flag.Bool("version", false, "version")
 	dryRun      = flag.Bool("n", false, "dry-run")
@@ -76,6 +76,7 @@ func rename(src, dst string) error {
 }
 
 func fix(parent, name string, printWp *WorkerPool) {
+	count.Add(1)
 	nfc := norm.NFC.String(name)
 	if nfc == name {
 		if *showAll {
@@ -178,6 +179,6 @@ func main() {
 		}
 		printWp.Close()
 
-		fmt.Printf("Fix: %d, Skip: %d\n", fixed.Load(), skipped.Load())
+		fmt.Printf("Count: %d, Fix: %d, Skip: %d\n", count.Load(), fixed.Load(), skipped.Load())
 	}
 }
