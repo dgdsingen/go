@@ -120,7 +120,7 @@ func walk(dir string, dirWp, fileWp, printWp *WorkerPool) *sync.WaitGroup {
 	}
 	for _, e := range entries {
 		name := e.Name()
-		if !e.IsDir() { // Symlink = !IsDir
+		if !e.IsDir() {
 			wg.Add(1)
 			fileWp.work <- func() {
 				defer wg.Done()
@@ -166,6 +166,7 @@ func main() {
 		dirWp := NewWorkerPool(1)
 		fileWp := NewWorkerPool(*jobs)
 		walk(root, dirWp, fileWp, printWp)
+		fix(filepath.Dir(root), filepath.Base(root), printWp)
 		dirWp.Close()
 		fileWp.Close()
 		printWp.Close()
