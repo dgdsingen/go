@@ -113,9 +113,9 @@ func main() {
 	walk(root)
 	fix(filepath.Dir(root), filepath.Base(root)) // root dir
 
-	fmt.Printf("\n%d개 정규화", fixed)
+	fmt.Printf("\nFix: %d", fixed)
 	if skipped > 0 {
-		fmt.Printf(", %d개 건너뜀", skipped)
+		fmt.Printf(", Skip: %d", skipped)
 	}
 	fmt.Println()
 	if skipped > 0 {
