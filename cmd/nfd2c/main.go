@@ -109,6 +109,7 @@ func main() {
 		slog.Error(err.Error())
 		os.Exit(2)
 	}
+	fmt.Printf("nfd2c: %s\n", root)
 
 	walk(root)
 	fix(filepath.Dir(root), filepath.Base(root)) // root dir
