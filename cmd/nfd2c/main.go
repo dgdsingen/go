@@ -159,6 +159,10 @@ func main() {
 		targets = flag.Args()
 	}
 	for i, target := range targets {
+		if i > 0 {
+			fmt.Println()
+		}
+
 		root, err := filepath.Abs(target)
 		if err != nil {
 			slog.Error(err.Error(), slog.String("target", target))
@@ -170,9 +174,6 @@ func main() {
 			continue
 		}
 
-		if i > 0 {
-			fmt.Println()
-		}
 		fmt.Printf("# %s\n", root)
 
 		count.Store(0)
