@@ -104,7 +104,7 @@ func fix(parent, name string, printWp *WorkerPool) {
 		return
 	}
 	if err := rename(src, dst); err != nil {
-		slog.Error(err.Error(), slog.String("src", src))
+		slog.Error(err.Error(), slog.String("src", src), slog.String("dst", dst))
 		skipped.Add(1)
 		return
 	}
