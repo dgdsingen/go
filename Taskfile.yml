@@ -17,6 +17,13 @@ vars:
       nfd2c: 'v0.3.10'
 
 tasks:
+  version:
+    cmds:
+      - |
+        {{ range $k, $v := .VERSIONS }}
+          echo {{ $k }}: {{ $v }}
+        {{ end }}
+
   bench:
     deps: [bench:r2n]
 
