@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -183,8 +184,8 @@ func main() {
 		timer = time.NewTimer(SecToDuration(*totalSec))
 	}
 
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
 
 	for {
 		select {
@@ -192,8 +193,8 @@ func main() {
 			robotgo.MoveRelative(randPoint(), randPoint())
 			ticker.Reset(SecToDuration(StepSec()))
 		case <-timer.C:
-			sigChan <- syscall.SIGTERM
-		case <-sigChan:
+			cancel()
+		case <-ctx.Done():
 			exitProcess(pidFilePath)
 		}
 	}
